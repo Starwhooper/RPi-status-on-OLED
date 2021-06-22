@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # Creator: Thiemo Schuff, thiemo@schuff.eu
 # Version 20210609
 
