@@ -5,424 +5,365 @@ from PIL import ImageFont
 
 import datetime
 import glob
-import http.client
+#import http.client
 import os
+import re
 import psutil
+import requests
 import RPi.GPIO as GPIO
 import socket
 import sys
 import time
-import urllib
+#import urllib
 import subprocess
 
 sys.path.append(r'/opt/LCD')
 import LCD_1in44
 import LCD_Config
 
-KEY_UP_PIN     = 19 
-KEY_DOWN_PIN   = 6
-KEY_LEFT_PIN   = 26
-KEY_RIGHT_PIN  = 5
-KEY_PRESS_PIN  = 13
-KEY1_PIN       = 16
-KEY2_PIN       = 20
-KEY3_PIN       = 21
 
-#init GPIO
+
+########################################################init GPIO
 GPIO.setmode(GPIO.BCM) 
 #GPIO.cleanup()
-GPIO.setup(KEY_UP_PIN,      GPIO.IN, pull_up_down=GPIO.PUD_UP)    # Input with pull-up
-GPIO.setup(KEY_DOWN_PIN,    GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Input with pull-up
-GPIO.setup(KEY_LEFT_PIN,    GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Input with pull-up
-GPIO.setup(KEY_RIGHT_PIN,   GPIO.IN, pull_up_down=GPIO.PUD_UP) # Input with pull-up
-GPIO.setup(KEY_PRESS_PIN,   GPIO.IN, pull_up_down=GPIO.PUD_UP) # Input with pull-up
-GPIO.setup(KEY1_PIN,        GPIO.IN, pull_up_down=GPIO.PUD_UP)      # Input with pull-up
-GPIO.setup(KEY2_PIN,        GPIO.IN, pull_up_down=GPIO.PUD_UP)      # Input with pull-up
-GPIO.setup(KEY3_PIN,        GPIO.IN, pull_up_down=GPIO.PUD_UP)      # Input with pull-up
+KEY_UP_PIN     = 19 
+GPIO.setup(KEY_UP_PIN,      GPIO.IN, pull_up_down=GPIO.PUD_UP)
+KEY_DOWN_PIN   = 6                                            
+GPIO.setup(KEY_DOWN_PIN,    GPIO.IN, pull_up_down=GPIO.PUD_UP)
+KEY_LEFT_PIN   = 26                                           
+GPIO.setup(KEY_LEFT_PIN,    GPIO.IN, pull_up_down=GPIO.PUD_UP)
+KEY_RIGHT_PIN  = 5                                            
+GPIO.setup(KEY_RIGHT_PIN,   GPIO.IN, pull_up_down=GPIO.PUD_UP)
+KEY_PRESS_PIN  = 13                                           
+GPIO.setup(KEY_PRESS_PIN,   GPIO.IN, pull_up_down=GPIO.PUD_UP)
+KEY1_PIN       = 16                                           
+GPIO.setup(KEY1_PIN,        GPIO.IN, pull_up_down=GPIO.PUD_UP)
+KEY2_PIN       = 20                                           
+GPIO.setup(KEY2_PIN,        GPIO.IN, pull_up_down=GPIO.PUD_UP)
+KEY3_PIN       = 21                                           
+GPIO.setup(KEY3_PIN,        GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-today = datetime.date.today()
-fontcolornormal = 'WHITE'
-fontcolorwarning = 'YELLOW'
-fontcoloralert = 'RED'
-zeilenhoehe = 9
-image6 = '/mnt/braavos/images/raspberry/laptopgirl.jpg'
-image3 = '/mnt/braavos/security/camera2/pictures/' + today.strftime('%Y-%m-%d') + '/*.jpg'
-#lastpicturesave = time.time()
-lastpicturesave = 0
-displaysizex = 128
-displaysizey = 128
-stayonpagedefault = 10
-stayonpage = stayonpagedefault
-hostname = str(socket.gethostname())
+#def latest_image(path: Path, pattern: str = "/mnt/braavos/images/raspberry/devlog/_image/*.zip"):
+#    files = path.glob(pattern)
+#    return max(files, key=lambda x: x.stat().st_ctime)
 
-def get_whereisthiemo():
- command = open("/opt/positioncheck/thiemo.info", "r").read()
-# command = str(socket.gethostname())
- output = str(command)
- fontcolor = fontcolornormal
- if output == 'outside': fontcolor = fontcoloralert
- return (output,fontcolor)
-
-def get_hostname():
- command = str(socket.gethostname())
- output = str(command)
- fontcolor = fontcolornormal
- if len(output) < 3: fontcolor = fontcoloralert
- return (output,fontcolor)
-
-def get_ip():
- command = (([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) + ["no IP found"])[0]
- output = str(command)
- fontcolor = fontcolornormal
- return (output,fontcolor)
-
-def get_date():
- now = datetime.date.today()
- output = now.strftime('%a, %-d. %b.\'%y')
- output = str(output)
- fontcolor = fontcolornormal
- if int(now.strftime('%Y')) < 2020: fontcolor = fontcoloralert
- return (output,fontcolor)
-
-def get_time():
- now = datetime.datetime.today()
- output = now.strftime('%-H:%M:%S')
- output = str(output)
- fontcolor = fontcolornormal
- return (output,fontcolor)
-
-def get_internetconnection():
- conn = http.client.HTTPConnection("172.217.19.78", timeout=3)
- try:
-  conn.request("HEAD", "/")
-  conn.close()
-  output = 'aviable'
-  fontcolor = fontcolornormal
- except Exception as e:
-  output = 'unaviable'
-  fontcolor = fontcoloralert
- return (output,fontcolor)
-
-def get_nasconnection():
- nas = 'braavos.lan'
- response = os.system("ping -c 1 " + nas + ">/dev/null 2>&1")
- if response == 0:
-  output = nas + ' aviable'
-  fontcolor = fontcolornormal
- else:
-  output = nas + ' unaviable'
-  fontcolor = fontcoloralert
- return(output, fontcolor)
-
-def get_piboard():
- fobj = open("/sys/firmware/devicetree/base/model")
- output = ''
- for line in fobj:
-    output = output + line.rstrip()
- fobj.close()
- output = output.replace("Raspberry Pi", "RPi")
- output = output.replace(" Model ", "")
- output = output.replace("Rev ", "")
- output = output[:10]
- ram = round(psutil.virtual_memory()[0] / (1024.0 ** 3))
- output = str(output) + ' ' + str(ram) + 'GB'
- fontcolor = fontcolornormal
- return(output, fontcolor)
-
-#def get_cpuinfo():
-# tFile = open('/sys/class/thermal/thermal_zone0/temp')
-# tempoutput = format(int(float(tFile.read())/1000),"d")
-# percentoutput = psutil.cpu_percent()
-# fontcolor = fontcolornormal
-# if int(tempoutput) >= 60: fontcolor = fontcolorwarning
-# if int(percentoutput) >= 60: fontcolor = fontcolorwarning
-# if int(tempoutput) >= 70: fontcolor = fontcoloralert
-# if int(percentoutput) >= 80: fontcolor = fontcoloralert
-# percentoutput = str(percentoutput)
-# if len(percentoutput) == 3: percentoutput = ' ' + percentoutput
-# output = percentoutput + '% ' + str(tempoutput) + '\'C'
-# return(output, fontcolor)
-
-def get_cpuusage():
-# tFile = open('/sys/class/thermal/thermal_zone0/temp')
-# tempoutput = format(int(float(tFile.read())/1000),"d")
- percentoutput = psutil.cpu_percent()
- fontcolor = fontcolornormal
-# if int(tempoutput) >= 60: fontcolor = fontcolorwarning
- if int(percentoutput) >= 60: fontcolor = fontcolorwarning
-# if int(tempoutput) >= 70: fontcolor = fontcoloralert
- if int(percentoutput) >= 80: fontcolor = fontcoloralert
- percentoutput = str(percentoutput)
- if len(percentoutput) == 3: percentoutput = ' ' + percentoutput
-# output = percentoutput + '% ' + str(tempoutput) + '\'C'
- output = percentoutput + '%'
- return(output, fontcolor)
-
-def get_cputemp():
- tFile = open('/sys/class/thermal/thermal_zone0/temp')
- tempoutput = format(int(float(tFile.read())/1000),"d")
-# percentoutput = psutil.cpu_percent()
- fontcolor = fontcolornormal
- if int(tempoutput) >= 60: fontcolor = fontcolorwarning
-# if int(percentoutput) >= 60: fontcolor = fontcolorwarning
- if int(tempoutput) >= 70: fontcolor = fontcoloralert
-# if int(percentoutput) >= 80: fontcolor = fontcoloralert
-# percentoutput = str(percentoutput)
-# if len(percentoutput) == 3: percentoutput = ' ' + percentoutput
- output = str(tempoutput) + '\'C'
- return(output, fontcolor)
-
-def get_sdinfo():
- obj_Disk = psutil.disk_usage('/')
- usedsd = round(obj_Disk.used / (1024.0 ** 3),2)
- usepercentsd = (obj_Disk.percent)
- fontcolor = fontcolornormal
- if usepercentsd >= 80: fontcolor = fontcolorwarning
- if usepercentsd >= 90: fontcolor = fontcoloralert
- output = str(usedsd) + 'GB (' + str(usepercentsd) + '%)'
- return(output, fontcolor)
-
-def get_raminfo():
- output = str(psutil.virtual_memory()[2]) + '%'
- fontcolor = fontcolornormal
- if psutil.virtual_memory()[2] >= 80: fontcolor = fontcolorwarning
- if psutil.virtual_memory()[2] >= 90: fontcolor = fontcoloralert
- return(output, fontcolor)
-
-def get_piholedbsize():
- dbsize = round(os.path.getsize("/etc/pihole/pihole-FTL.db") / (1024.0 ** 3),2)
- output = str(dbsize)
- fontcolor = fontcolornormal
- if dbsize >= 1.5: fontcolor = fontcolorwarning
- if dbsize >= 2: fontcolor = fontcoloralert
- #output = output / (1024.0 ** 3)
- return(output, fontcolor)
- 
 def main():
  LCD = LCD_1in44.LCD()
  Lcd_ScanDir = LCD_1in44.SCAN_DIR_DFT
  LCD.LCD_Init(Lcd_ScanDir)
- 
  LCD.LCD_Clear()
- 
- if len(sys.argv) > 1:
-  if str(sys.argv[1]) == 'test': 
-   runmode = 'test'
-  if str(sys.argv[1]) == 'run': 
-   runmode = 'run'
-  if str(sys.argv[1]) == 'onetime': 
-   runmode = 'onetime'
- else:
-  runmode = 'none'
- 
- status = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
- 
- defaultpage = 12
- page = defaultpage
- pagesettime = 0
- global lastpicturesave
- global stayonpage
- 
+
+######################################################Constant
+ displaysizex = LCD_1in44.LCD_WIDTH
+ displaysizey = LCD_1in44.LCD_HEIGHT
+ pageids = [0,1,2,3,4]
+ pagenames = ['Status','Service','...','Laptopgirl','Internetbild']
+ imagerefresh = 0.2
+
+######################################################first
+ page = 0
+ lastpiholversionintervall = 300
+ lastpiholeversion = 0
+ lastpicturesave = 999999999
+ picturesaveintervall = 3600
+ lastping = 0
+ pingintervall = 300
+ pinglocalcolor = 'YELLOW'
+ pinginternetcolor = 'YELLOW'
+ borderstartsatx = 33 - 4
+ marqueepos = 0
+ marqueewait = 0
+
  while True:
-   
+####################################################Prüfungen
+  if 'hostname' in locals():
+   hostname = hostname
+  else:
+   hostname = str(socket.gethostname()).upper()
+  if 'ip' in locals():
+   ip = ip
+  else:
+   ip = str((([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) + ["no IP found"])[0])
+  #hostname = hostname.upper()
+
+#####################################################Which Page
+#  if GPIO.input(KEY_UP_PIN) == 0:    page = 12
+  if GPIO.input(KEY_LEFT_PIN) == 0:  page = page - 1
+  if GPIO.input(KEY_RIGHT_PIN) == 0: page = page + 1
+#  if GPIO.input(KEY_DOWN_PIN) == 0:  page = 6
+  if page > pageids[-1]: page = pageids[0]
+  if page < pageids[0]: page = pageids[-1]
+  if lastpicturesave > 0:
+   if time.time() >= lastpicturesave + picturesaveintervall: page = 0
+
+#####################################################Bild generieren
   image = Image.new("RGB", (LCD.width, LCD.height), "BLACK")
   draw = ImageDraw.Draw(image)
-  
-  if GPIO.input(KEY_UP_PIN) == 0:    page = 12
-  if GPIO.input(KEY_LEFT_PIN) == 0:  page = 9
-  if GPIO.input(KEY_RIGHT_PIN) == 0: page = 3
-  if GPIO.input(KEY_DOWN_PIN) == 0:  page = 6
-  if page == defaultpage: pagesettime = 0
-  if page != defaultpage: 
-   if pagesettime == 0: pagesettime = time.time()
-   if pagesettime + stayonpage < time.time(): 
-    stayonpage = stayonpagedefault
-    page = defaultpage
-    pagesettime = 0
-  
-  if page == 3:
-   list_of_files = glob.glob(image3)
-   if len(list_of_files) >= 1:
-    latest_file = max(list_of_files, key=os.path.getctime)
-    my_file = Path(latest_file)
-    if my_file.is_file(): 
-     stayonpage = 30
-     image = Image.open(latest_file)
-   #else:
-#     draw.text((  0, 0), latest_file, "YELLOW")     
-   draw.text((  0, 0), 'no image found', "YELLOW")
-   draw.text((  0, 10), image3, "YELLOW")
-	
-  if page == 6:
-   my_file = Path(image6)
-   if my_file.is_file(): 
-    image = Image.open('/mnt/braavos/images/raspberry/laptopgirl.jpg')
+
+
+#####################################################Bild generieren Page 0
+  if page == 0: # Start
+   posx = 0
+
+   ###Hostname
+   ttffont = "/usr/share/fonts/truetype/msttcorefonts/courbd.ttf"
+   if os.path.isfile(ttffont):
+    ttffontheader = ImageFont.truetype(ttffont, 20)
+    width, height = draw.textsize(str(hostname), font=ttffontheader)
+    draw.text( (((displaysizex-width)/2) , 0), str(hostname), font=ttffontheader, fill = 'YELLOW')
    else:
-    draw.text((  20, 20), 'Page 6', "ORANGE")  
+    width, height = draw.textsize(str(hostname))
+    imagehostname = Image.new("RGB", (width, height), "BLACK")
+    drawimagehostname = ImageDraw.Draw(imagehostname)
+    drawimagehostname.text((0,0), hostname , fill = 'YELLOW')
+    factor=2
+    imagehostname = imagehostname.resize((int(width*factor), int(height*factor)))
+    image.paste(imagehostname,((int((displaysizex-(width*2))/2)),0))
+   posx = posx + 20
+   
+   ###Date
+   draw.text((0,posx), "Date:" + datetime.date.today().strftime('%a')[:2] + datetime.date.today().strftime(', %d. %b.\'%y') , fill = 'WHITE')
+   posx = posx + 10
+   
+   ###IP
+   draw.text((0,posx), "IP  :" + ip , fill = 'WHITE')
+   posx = posx + 10
+   
+   ###Ping
+   pinglocal = pinginternet = "offline"
+   if time.time() >= lastping + pingintervall: #Ping systems all x seconds
+    if os.system("ping -c 1 braavos.lan>/dev/null") == 0: pinglocalcolor = 'GREEN'
+    else: pinglocalcolor = 'RED'
+    if os.system("ping -c 1 google.de>/dev/null") == 0: pinginternetcolor = 'GREEN'
+    else: pinginternetcolor = 'RED'
+    lastping = int(time.time())
+   draw.rectangle((0, posx + 11) + (int( displaysizex / pingintervall * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
+   draw.text((0,posx), "Ping:     ,", fill = 'WHITE')
+   draw.text((0,posx), "     LOCAL", fill = pinglocalcolor)
+   draw.text((0,posx), "           REMOTE", fill = pinginternetcolor)
+   posx = posx + 13
 
-  if page == 9:
-   draw.text((  20, 20), 'Page 9', "PURPLE")  
-   
-  if page == 12:
-   ################BUTTONANZEIGE###############
-   status[12] = [100, 100, '', "GREEN"]
-   if GPIO.input(KEY_UP_PIN) == 0:    status[12] = [119, 119, '^', "GREEN"]
-   if GPIO.input(KEY_LEFT_PIN) == 0:  status[12] = [119, 119, '<', "GREEN"]
-   if GPIO.input(KEY_RIGHT_PIN) == 0: status[12] = [119, 119, '>', "GREEN"]
-   if GPIO.input(KEY_DOWN_PIN) == 0:  status[12] = [119, 119, 'v', "GREEN"]
-   if GPIO.input(KEY_PRESS_PIN) == 0: status[12] = [119, 119, 'J', "GREEN"]
-   if GPIO.input(KEY1_PIN) == 0:      status[12] = [119, 119, '1', "GREEN"]
-   if GPIO.input(KEY2_PIN) == 0:      status[12] = [119, 119, '2', "GREEN"]
-   if GPIO.input(KEY3_PIN) == 0:      status[12] = [119, 119, '3', "GREEN"]
-   
-   posx = 1
-   posy = 0
-   i = 1
-  
-  
-   ##########HOSTNAME
-   values = get_hostname()
-   text = 'HST:' + values[0]
-   color = values[1]
-   status[i] = [posx, posy, text, color]
-   i = i + 1
-   posy = posy + zeilenhoehe
-   
-   ##########IP 
-   values = get_ip()
-   text = 'IP :' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
-   
-   ##########Datum
-   values = get_date()
-   text = 'DAT:' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
-   
-   ##########Uhrzeit
-   values = get_time()
-   text = 'TME:' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
-   
-   ##########Internetverbindung
-   values = get_internetconnection()
-   text = 'INT:' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
-   
-   ##########NAS erreichbar
-   values = get_nasconnection()
-   text = 'NAS:' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
-   
-   ##########Platinentyp
-   values = get_piboard()
-   text = 'BRD:' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
-   
-   ##########CPU Info
-   values = get_cpuusage()
-   text = 'CPU:' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
+   ###PI Board
+   if 'piboardinformation' not in locals():
+    fobj = open("/sys/firmware/devicetree/base/model")
+    output = ''
+    for line in fobj:
+       output = output + line.rstrip()
+    fobj.close()
+    output = output.replace("Raspberry Pi ", "RPi ")
+    output = output.replace(" Model ", "")
+    output = output.replace("Rev ", "")
+    output = output.replace("  ", " ")
+    output = re.sub('[^a-zA-Z0-9. ]+', '', output)
+    piboardinformation = output
+   draw.text((0,posx), "Main:" + piboardinformation, fill = 'WHITE')
+   posx = posx + 10
 
-   ##########CPU Info
-   values = get_cputemp()
-   text = 'CPU:' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
+   ###CPU Usage
+   usage = int(float(psutil.cpu_percent()))
+   draw.text((0,posx), "CPU :", fill = 'WHITE')
+   width = (displaysizex - 1 - borderstartsatx) /100 * usage
+   fontcolor = 'WHITE'
+   if usage >= 80: fillcolor = 'RED'
+   elif usage >= 60: fillcolor = 'YELLOW'
+   else: fillcolor = 'GREEN'
+   if fillcolor == 'YELLOW': fontcolor = 'GREY'
+   draw.rectangle((borderstartsatx, posx) + (borderstartsatx + width, posx + 10), fill=fillcolor, width=0)
+   draw.rectangle((borderstartsatx, posx) + (displaysizex-1, posx + 10), outline='WHITE', width=1)
+   draw.text((70,posx), str(usage) + "%", fill = fontcolor)
+   posx = posx + 10
 
-#   ##########CPU Info
-#   values = get_cpuinfo()
-#   text = 'CPU:' + values[0]
-#   color = values[1]
-#   posy = posy + zeilenhoehe
-#   status[i] = [posx, posy, text, color]
-#   i = i + 1
+   ###RAM Usage
+   gpuram = int(re.sub('[^0-9]+', '', str(subprocess.check_output('/usr/bin/vcgencmd get_mem gpu|cut -d= -f2', shell=True))))
+   totalmem = round(psutil.virtual_memory()[0] / 1000 ** 2) + gpuram
+   usagemem = round((psutil.virtual_memory()[0] - psutil.virtual_memory()[1]) / 1000 ** 2)
+   usageratemem = psutil.virtual_memory()[2]
+   usagerategpuram = 100 / (totalmem + gpuram) * gpuram
+   draw.text((0,posx), "RAM :", fill = 'WHITE')
+   width = (displaysizex - 1 - borderstartsatx) /100 * usageratemem
+   gpuwidth = (displaysizex - 1 - borderstartsatx) /100 * usagerategpuram
+   fontcolor = 'WHITE'
+   if usageratemem >= 80: fillcolor = 'RED'
+   elif usageratemem >= 60: fillcolor = 'YELLOW'
+   else: fillcolor = 'GREEN'
+   if fillcolor == 'YELLOW': fontcolor = 'GREY'
+   draw.rectangle((borderstartsatx, posx) + (borderstartsatx + width, posx + 10), fill=fillcolor, width=0)
+   draw.rectangle((displaysizex-1-gpuwidth, posx) + (displaysizex-1, posx + 3), fill='RED', width=1)
+   draw.rectangle((displaysizex-1-gpuwidth, posx + 4) + (displaysizex-1, posx + 6), fill='GREEN', width=1)
+   draw.rectangle((displaysizex-1-gpuwidth, posx + 7) + (displaysizex-1, posx + 10), fill='BLUE', width=1)
+   draw.rectangle((borderstartsatx, posx) + (displaysizex-1, posx + 10), outline='WHITE', width=1)
+   draw.text((40,posx), str(usagemem) + "+" + str(gpuram) + "/" + str(totalmem) + "MB", fill = fontcolor)
+   posx = posx + 10
    
-   ##########SD Info
-   values = get_sdinfo()
-   text = 'SD :' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
+#   ###GPU RAM:
+#   gpuram = re.sub('[^0-9]+', '', str(subprocess.check_output('/usr/bin/vcgencmd get_mem gpu|cut -d= -f2', shell=True)))
+#   fontcolor = 'WHITE'
+#   draw.text((0,posx), "GPU: " + str(gpuram) + "MB", fill = fontcolor)
+#   posx = posx + 10
 
-   ##########RAM Info
-   values = get_raminfo()
-   text = 'RAM:' + values[0]
-   color = values[1]
-   posy = posy + zeilenhoehe
-   status[i] = [posx, posy, text, color]
-   i = i + 1
+   ###Temp
+   tFile = open('/sys/class/thermal/thermal_zone0/temp')
+   temp = int(format(int(float(tFile.read())/1000),"d"))
+   draw.text((0,posx), "Temp:", fill = 'WHITE')
+   width = (displaysizex - 1 - borderstartsatx) / (90 - 30) * (temp - 30)
+   fontcolor = 'WHITE'
+   if width < 0: width = 0
+   if temp >= 70: fillcolor = 'RED'
+   elif temp >= 60: fillcolor = 'YELLOW'
+   else: fillcolor = 'GREEN'
+   if fillcolor == 'YELLOW': fontcolor = 'GREY'
+   draw.rectangle((borderstartsatx, posx) + (borderstartsatx + width, posx + 10), fill=fillcolor, width=0)
+   draw.rectangle((borderstartsatx, posx) + (displaysizex-1, posx + 10), outline='WHITE', width=1)
+   draw.text((70,posx), str(temp) + '°C' , fontcolor)
+   posx = posx + 10
 
-   ##########PiHole DB Size
-   if hostname == 'thewall':
-    values = get_piholedbsize()
-    text = 'PDB:' + values[0] + 'GB'
-    color = values[1]
-    posy = posy + zeilenhoehe
-    status[i] = [posx, posy, text, color]
-    i = i + 1
+   ###SD Usage
+   totalsd = psutil.disk_usage('/').total
+   freesd = psutil.disk_usage('/').free
+   usagesd = totalsd - freesd
+   usagesdpercent = 100 / totalsd * usagesd
    
-   ##########Where is Thiemo
-   if hostname == 'pentos':
-    values = get_whereisthiemo()
-    text = 'POS:Thiemo is ' + values[0]
-    color = values[1]
-    posy = posy + zeilenhoehe
-    status[i] = [posx, posy, text, color]
-    i = i + 1
+   if totalsd >= 17000000000: totalsd = 32
+   elif totalsd >= 9000000000: totalsd = 16
+   elif totalsd >= 5000000000: totalsd = 8
+   elif totalsd >= 3000000000: totalsd = 4
+   else: totalsd = 2
    
-   ###########CREATE IMAGE
-   for i in status:
-    if isinstance(i, list):
-     if os.path.isfile('/home/pi/.fonts/courier-new.ttf'):
-      if 'HST:' in i[2]:
-       i[2] = i[2][4:]
-       i[2] = i[2].upper()
-       fnt = ImageFont.truetype('/home/pi/.fonts/courier-new.ttf', 20)
-       width,height = draw.textsize(str(i[2]), font=fnt)
-       draw.text( (((displaysizex-width)/2) , i[1]), str(i[2]), font=fnt, fill = 'YELLOW')
-      else:
-       fnt = ImageFont.load_default()
-       draw.text(( i[0], i[1]), str(i[2]), font=fnt, fill = i[3])
-     else:
-      draw.text(( i[0], i[1]), str(i[2]), fill = i[3])
-  
+   usagesd = round(usagesd / (1024.0 ** 3),1)
+   draw.text((0,posx), "SD  :", fill = 'WHITE')
+   width = (displaysizex - 1 - borderstartsatx) /100 * usagesdpercent
+   fontcolor = 'WHITE'
+   if usagesdpercent >= 90: fillcolor = 'RED'
+   elif usagesdpercent >= 70:
+    fillcolor = 'YELLOW'
+    fontcolor = 'GRAY'
+   elif usagesdpercent < 50 and totalsd > 4: fillcolor = 'PURPLE'
+   else: fillcolor = 'GREEN'
+   draw.rectangle((borderstartsatx, posx) + (borderstartsatx + width, posx + 10), fill=fillcolor, width=0)
+   draw.rectangle((borderstartsatx, posx) + (displaysizex-1, posx + 10), outline='WHITE', width=1)
+   draw.text((55,posx), str(usagesd) + "/" + str(totalsd) + "GB", fill = fontcolor)
+   posx = posx + 10
+   
+   ###Last Image
+   #print(latest_image(pathdirs))
+   if 'latest_file' not in locals():
+    list_of_files = glob.glob('/mnt/braavos/images/raspberry/' + hostname + '/_image/*.zip') # * means all if need specific format then *.csv
+   if len(list_of_files) == 0:
+    draw.text((marqueepos ,posx), 'IMG :', fill = fontcolor) 
+    draw.text((marqueepos ,posx), '     missed', fill = 'RED') 
+   else:
+    latest_file = max(list_of_files, key=os.path.getctime)
+    latest_file_name = os.path.basename(latest_file)
+    latest_file_name_text = 'IMG: ' + latest_file_name
+    marqueewidth, marqueewidthheight = draw.textsize(latest_file_name_text)
+    if marqueepos <= displaysizex - marqueewidth: 
+     marqueewait = marqueewait + 1
+    else: marqueepos = marqueepos - 2
+    if marqueewait > 5 / imagerefresh: 
+     marqueepos = 0
+     marqueewait = 0
+    draw.text((marqueepos ,posx), latest_file_name_text, fill = fontcolor) 
+   posx = posx + 10
+
+  if page == 1: # Service
+   #####################################HOSTNAME = DEVLOP
+   if hostname == 'DEVLOP': 
+    draw.text((0,20), 'Entwicklungsumgebung', fill = 'WHITE')
+   #####################################HOSTNAME = THEWALL (Pi-Hole)
+   elif hostname == 'THEWALL': 
+    if time.time() >= lastpiholeversion + lastpiholversionintervall:
+     lastpiholeversion = time.time()
+     piholeversion_current = re.sub('[^0-9.]+', '', str(subprocess.check_output("/usr/local/bin/pihole -v | grep Pi-hole | cut -d' ' -f6", shell=True)))
+     piholeversion_latest = re.sub('[^0-9.]+', '', str(subprocess.check_output("/usr/local/bin/pihole -v | grep Pi-hole | cut -d' ' -f8", shell=True)))
+     adminlteversion_current = re.sub('[^0-9.]+', '', str(subprocess.check_output("/usr/local/bin/pihole -v | grep AdminLTE | cut -d' ' -f6", shell=True)))
+     adminlteversion_latest = re.sub('[^0-9.]+', '', str(subprocess.check_output("/usr/local/bin/pihole -v | grep AdminLTE | cut -d' ' -f8", shell=True)))
+     ftlversion_current = re.sub('[^0-9.]+', '', str(subprocess.check_output("/usr/local/bin/pihole -v | grep FTL | cut -d' ' -f6", shell=True)))
+     ftlversion_latest = re.sub('[^0-9.]+', '', str(subprocess.check_output("/usr/local/bin/pihole -v | grep FTL | cut -d' ' -f8", shell=True)))
+    draw.text((0,0), 'DNS Versions', fill = 'WHITE')
+    draw.text((0,10), "Pi-hole:", fill = 'WHITE')
+    if piholeversion_current == piholeversion_latest: fontcolor = "WHITE"
+    else: fontcolor = "RED"
+    draw.text((0,20), str(piholeversion_current) + " of " + str(piholeversion_latest), fill = fontcolor)
+    draw.text((0,30), "AdminLTE:", fill = 'WHITE')
+    if adminlteversion_current == adminlteversion_latest: fontcolor = "WHITE"
+    else: fontcolor = "RED"
+    draw.text((0,40), str(adminlteversion_current) + " of " + str(adminlteversion_latest), fill = fontcolor)
+    draw.text((0,50), "FTL:", fill = 'WHITE')
+    if ftlversion_current == ftlversion_latest: fontcolor = "WHITE"
+    else: fontcolor = "RED"
+    draw.text((0,60), str(ftlversion_current) + " of " + str(ftlversion_latest), fill = fontcolor)
+   #####################################HOSTNAME = PENTOS
+   elif hostname == 'PENTOS':
+    list_of_files_cam5 = glob.glob('/mnt/braavos/security/camera5/pictures/' + str(datetime.date.today().strftime('%Y-%m')) + '/' + str(datetime.date.today().strftime('%Y-%m-%d')) + '/' + str(datetime.date.today().strftime('%Y-%m-%d-%H')) + '/*.jpg')
+    list_of_files_cam1 = glob.glob('/mnt/braavos/security/camera5/pictures/' + str(datetime.date.today().strftime('%Y-%m')) + '/' + str(datetime.date.today().strftime('%Y-%m-%d')) + '/' + str(datetime.date.today().strftime('%Y-%m-%d-%H')) + '/*.jpg')
+    #list_of_files_cam1 = glob.glob('/mnt/braavos/security/camera1/pictures/' + str(datetime.date.today().strftime('%Y-%m')) + '/' + str(datetime.date.today().strftime('%Y-%m-%d')) + '/*.jpg')
+    if len(list_of_files_cam5) >= 1:
+     latest_file = max(list_of_files_cam5, key=os.path.getctime)
+     my_file = Path(latest_file)
+     if my_file.is_file(): 
+      camerapic = Image.open(latest_file)
+      camerapic = camerapic.resize((displaysizex,int(displaysizey/16*9)))
+      image.paste(camerapic,(0,13,displaysizex,int(displaysizey/16*9)+13))
+    elif len(list_of_files_cam1) >= 1:
+     latest_file = max(list_of_files_cam1, key=os.path.getctime)
+     my_file = Path(latest_file)
+     if my_file.is_file(): 
+      camerapic = Image.open(latest_file)
+      camerapic = camerapic.resize((displaysizex,int(displaysizey/16*9)))
+      image.paste(camerapic,(0,13,displaysizex,int(displaysizey/16*9)+13))
+    else: draw.text((0,10), 'no image found', "YELLOW")
+    draw.text((0,1), 'Überwachungskamera', fill = 'WHITE')
+    thiemopositionfile = "/opt/positioncheck/thiemo.info"
+    if os.path.isfile(thiemopositionfile):
+     position = open(thiemopositionfile, "r").read()
+    else: position = "unknown"
+    draw.text((0,(displaysizey/16*9)+13), 'Thiemo is at ' + position, fill = 'WHITE')
+   else: draw.text((0,20), 'nichts besonderes', fill = 'WHITE')
+
+  if page == 2: # ...
+   draw.text((0,1), '...', fill = 'WHITE')
+
+  if page == 3: # Laptopgirl
+   wallpaper = '/mnt/braavos/images/raspberry/laptopgirl.jpg'
+   my_file = Path(wallpaper)
+   if my_file.is_file(): 
+    imagewallpaper = Image.open(wallpaper)
+    image.paste(imagewallpaper)
+
+  if page == 4: # Internetimage
+   wallpaper = 'https://64.media.tumblr.com/b24c19504b3832365d6fee08b48bda01/tumblr_nkxfj0hWNA1sa5af1o1_400.png'
+   imagewallpaper = Image.open(requests.get(wallpaper, stream=True).raw)
+   imagewallpaper = imagewallpaper.resize((displaysizex,displaysizey))
+   image.paste(imagewallpaper)
+
+
+##############Allgemein
+  i=0
+  while i <= displaysizex:
+   draw.point((i,displaysizey-1), fill= 'GRAY')
+   i = (i + 10)
+  i=0
+  while i <= displaysizey:
+   draw.point((displaysizex-1,i), fill= 'GRAY')
+   i = (i + 10)
+  draw.text((0,118), '<-', fill = 'WHITE')
+  draw.text(((displaysizex-draw.textsize(str(pagenames[page]))[0])/2,118), str(pagenames[page]), fill = 'WHITE')
+  draw.text((115,118), '->', fill = 'WHITE')
+
+
+#####################################################Bild ausgeben
+
+
+
   image = image.resize((displaysizex, displaysizey))
-  LCD.LCD_ShowImage(image.transpose(Image.ROTATE_180),0,0)
+  LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
+  time.sleep(imagerefresh)
+
   
-  #if runmode == 'test': 
-  
-  if time.time() >= lastpicturesave + 3600: #Saves image all x seconds
+  if time.time() >= lastpicturesave + picturesaveintervall: #Saves image all x seconds
    image.save(r'/mnt/braavos/images/raspberry/status_' + str(socket.gethostname()) + '.png',optimize=True)
    lastpicturesave = time.time()
-  #if runmode != "run": 
-  # break
- 
-  time.sleep(0.2)
 
 
 if __name__ == '__main__':
-    main()
+ main()
