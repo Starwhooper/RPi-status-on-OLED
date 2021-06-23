@@ -1,0 +1,7 @@
+{
+ "ttffont": "/usr/share/fonts/truetype/msttcorefonts/courbd.ttf"
+ "localpingdestination": "192.168.178.10"
+ "remotepingdestination": "8.8.8.8"
+ "checkforlatestfile": "/mnt/braavos/images/raspberry/devlop/_image/*.zip"
+ "saveimagedestination": "/mnt/braavos/images/raspberry/status_devlop.png"
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Creator: Thiemo Schuff, thiemo@schuff.eu
-# Version 20210609
+# checkout: https://github.com/Starwhooper/RPi-status-on-OLED
 
 from pathlib import Path
 from PIL import Image
@@ -18,10 +18,15 @@ import socket
 import sys
 import time
 import subprocess
+import json
 
 sys.path.append('/opt/LCD')
 import LCD_1in44
 import LCD_Config
+
+########################################################import config.json
+with open('config.json','r') as file:
+ cf = json.loads(file.read())
 
 ########################################################init GPIO
 GPIO.setmode(GPIO.BCM) 
@@ -39,11 +44,11 @@ def main():
  displaysizex = LCD_1in44.LCD_WIDTH
  displaysizey = LCD_1in44.LCD_HEIGHT
  imagerefresh = 0.2
- ttffont = "/usr/share/fonts/truetype/msttcorefonts/courbd.ttf"
- localpingdestination = "braavos.lan"
- remotepingdestination = "google.com"
- checkforlatestfile = '/mnt/braavos/images/raspberry/' + str(socket.gethostname()) + '/_image/*.zip'
- saveimagedestination = '/mnt/braavos/images/raspberry/status_' + str(socket.gethostname()) + '.png'
+ ttffont = cf["ttffont"]
+ localpingdestination = cf["localpingdestination"]
+ remotepingdestination = cf["remotepingdestination"]
+ checkforlatestfile = cf["checkforlatestfile"]
+ saveimagedestination = cd["saveimagedestination"]
 
 ######################################################first
  lastpicturesave = 999999999
