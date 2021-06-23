@@ -25,8 +25,12 @@ import LCD_1in44
 import LCD_Config
 
 ########################################################import config.json
-with open('config.json','r') as file:
- cf = json.loads(file.read())
+
+if os.path.isfile('config.json'):
+ with open('config.json','r') as file:
+  cf = json.loads(file.read())
+else: sys.exit("No config files found, please rename file config.json.example to config.json and chnage the content to you need")
+
 
 ########################################################init GPIO
 GPIO.setmode(GPIO.BCM) 
@@ -48,7 +52,7 @@ def main():
  localpingdestination = cf["localpingdestination"]
  remotepingdestination = cf["remotepingdestination"]
  checkforlatestfile = cf["checkforlatestfile"]
- saveimagedestination = cd["saveimagedestination"]
+ saveimagedestination = cf["saveimagedestination"]
 
 ######################################################first
  lastpicturesave = 999999999
