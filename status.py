@@ -25,12 +25,10 @@ import LCD_1in44
 import LCD_Config
 
 ########################################################import config.json
-
 if os.path.isfile('config.json'):
  with open('config.json','r') as file:
   cf = json.loads(file.read())
-else: sys.exit("No config files found, please rename file config.json.example to config.json and chnage the content to you need")
-
+else: sys.exit("No config file found, please rename file config.json.example to config.json and change the content to your needs")
 
 ########################################################init GPIO
 GPIO.setmode(GPIO.BCM) 
@@ -47,18 +45,10 @@ def main():
 ######################################################Constant
  displaysizex = LCD_1in44.LCD_WIDTH
  displaysizey = LCD_1in44.LCD_HEIGHT
- imagerefresh = 0.2
- ttffont = cf["ttffont"]
- localpingdestination = cf["localpingdestination"]
- remotepingdestination = cf["remotepingdestination"]
- checkforlatestfile = cf["checkforlatestfile"]
- saveimagedestination = cf["saveimagedestination"]
 
 ######################################################first
  lastpicturesave = 999999999
- picturesaveintervall = 3600
  lastping = 0
- pingintervall = 300
  pinglocalcolor = 'YELLOW'
  pinginternetcolor = 'YELLOW'
  borderstartsatx = 33 - 4
@@ -88,8 +78,8 @@ def main():
   posx = 0
 
   ###Hostname
-  if os.path.isfile(ttffont):
-   ttffontheader = ImageFont.truetype(ttffont, 20)
+  if os.path.isfile(cf["ttffont"]):
+   ttffontheader = ImageFont.truetype(cf["ttffont"], 20)
    width, height = draw.textsize(str(hostname), font=ttffontheader)
    draw.text( (((displaysizex-width)/2) , 0), str(hostname), font=ttffontheader, fill = 'YELLOW')
   else:
@@ -112,13 +102,13 @@ def main():
   
   ###Ping
   pinglocal = pinginternet = "offline"
-  if time.time() >= lastping + pingintervall: #Ping systems all x seconds
-   if os.system("ping -c 1 " + localpingdestination + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
+  if time.time() >= lastping + cf["pingintervall"]: #Ping systems all x seconds
+   if os.system("ping -c 1 " + cf["localpingdestination"] + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
    else: pinglocalcolor = 'RED'
-   if os.system("ping -c 1 " + remotepingdestination + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
+   if os.system("ping -c 1 " + cf["remotepingdestination"] + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
    else: pinginternetcolor = 'RED'
    lastping = int(time.time())
-  draw.rectangle((0, posx + 11) + (int( displaysizex / pingintervall * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
+  draw.rectangle((0, posx + 11) + (int( displaysizex / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
   draw.text((0,posx), "Ping:     ,", fill = 'WHITE')
   draw.text((0,posx), "     LOCAL", fill = pinglocalcolor)
   draw.text((0,posx), "           REMOTE", fill = pinginternetcolor)
@@ -227,7 +217,7 @@ def main():
   
   ###Last Image
   if 'latest_file' not in locals():
-   list_of_files = glob.glob(checkforlatestfile)
+   list_of_files = glob.glob(cf["checkforlatestfile"])
   if len(list_of_files) == 0:
    draw.text((marqueepos ,posx), 'IMG :', fill = fontcolor) 
    draw.text((marqueepos ,posx), '     missed', fill = 'RED') 
@@ -239,7 +229,7 @@ def main():
    if marqueepos <= displaysizex - marqueewidth: 
     marqueewait = marqueewait + 1
    else: marqueepos = marqueepos - 2
-   if marqueewait > 5 / imagerefresh: 
+   if marqueewait > 5 / cf["imagerefresh"]: 
     marqueepos = 0
     marqueewait = 0
    draw.text((marqueepos ,posx), latest_file_name_text, fill = fontcolor) 
@@ -248,11 +238,11 @@ def main():
 #####################################################Bild ausgeben
   image = image.resize((displaysizex, displaysizey))
   LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
-  time.sleep(imagerefresh)
+  time.sleep(cf["imagerefresh"])
 
   
-  if time.time() >= lastpicturesave + picturesaveintervall: #Saves image all x seconds
-   image.save(saveimagedestination,optimize=True)
+  if time.time() >= lastpicturesave + cf["picturesaveintervall"]: #Saves image all x seconds
+   image.save(cf["saveimagedestination"],optimize=True)
    lastpicturesave = time.time()
 
 
