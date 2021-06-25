@@ -1,0 +1,9 @@
+pishrink_20200826.sh v0.1.2
+pishrink_20200826.sh: ERROR occured in line 210: /mnt/braavos/images/raspberry/devlop/_image/devlop-20210623-200127_PI2.img is not a file...
+Line 353
+partnewsize: 2158936064
+newpartend: 2431565824
+Line 378
+endresult: 2431566336
+Line 415
+aftersize: 2,3G

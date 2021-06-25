@@ -20,13 +20,15 @@ import time
 import subprocess
 import json
 
-sys.path.append('/opt/LCD')
+scriptdir = (os.path.split(os.path.abspath(__file__))[0])
+sys.path.append(scriptdir + '/waveshare')
 import LCD_1in44
 import LCD_Config
 
-########################################################import config.json
-if os.path.isfile('config.json'):
- with open('config.json','r') as file:
+
+#######################################################import config.json
+if os.path.isfile(scriptdir + '/config.json'):
+ with open(scriptdir + '/config.json','r') as file:
   cf = json.loads(file.read())
 else: sys.exit("No config file found, please rename file config.json.example to config.json and change the content to your needs")
 
