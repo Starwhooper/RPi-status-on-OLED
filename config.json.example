@@ -1,0 +1,10 @@
+{
+ "ttffont": "/usr/share/fonts/truetype/msttcorefonts/courbd.ttf",
+ "localpingdestination": "192.168.178.10",
+ "remotepingdestination": "8.8.8.8",
+ "checkforlatestfile": "/mnt/server/_image/*.zip",
+ "saveimagedestination": "/mnt/server/status.png",
+ "picturesaveintervall": 3600,
+ "pingintervall": 300,
+ "imagerefresh": 0.2
+}
