@@ -11,7 +11,9 @@ I use this script to get a quick and up-to-date status of the system every time 
 In this way I can see at a glance the current workload, whether problems are looming and whether the service is currently running.
 
 ## Example / Beispiel
-![Display](https://github.com/Starwhooper/RPi-status-on-OLED/blob/main/examples/status_thewall.png)
+![Display](https://github.com/Starwhooper/RPi-status-on-OLED/blob/main/examples/before_2020-09.png)
+![Display](https://github.com/Starwhooper/RPi-status-on-OLED/blob/main/examples/before_2021-06.png)
+![Display](https://github.com/Starwhooper/RPi-status-on-OLED/blob/main/examples/newest.png)
 * DATE: current date
 * IP: IP Address of Pi
 * PING: status of ping to local and remote adress
