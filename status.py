@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Creator: Thiemo Schuff, thiemo@schuff.eu
-# checkout: https://github.com/Starwhooper/RPi-status-on-OLED
+# Source: https://github.com/Starwhooper/RPi-status-on-OLED
 
 from pathlib import Path
 from PIL import Image
@@ -20,84 +20,60 @@ import time
 import subprocess
 import json
 
+##########ensure that only one instance is running at the same time 
 runninginstances = 0
 for p in psutil.process_iter():
  if len(p.cmdline()) == 2:
-#  print(os.environ['_'])
-#  print(os.path.abspath(__file__))
-  #if p.cmdline()[0] == os.environ['_']:
   if p.cmdline()[1] == os.path.abspath(__file__):
    runninginstances = runninginstances + 1
-
 if runninginstances >= 2:
- print('exit in reason of already running')
- exit()
-else:
- 
- scriptdir = (os.path.split(os.path.abspath(__file__))[0])
- sys.path.append(scriptdir + '/waveshare')
+ sys.exit('exit: is already running')
+
+##########import modules from waveshare 
+sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/waveshare')
+try:
  import LCD_1in44
  import LCD_Config
- 
- 
- #######################################################import config.json
- if os.path.isfile(scriptdir + '/config.json'):
-  with open(scriptdir + '/config.json','r') as file:
-   cf = json.loads(file.read())
- else: sys.exit("No config file found, please rename file config.json.example to config.json and change the content to your needs")
- 
- ########################################################init GPIO
- GPIO.setmode(GPIO.BCM) 
- 
- KEY_PRESS_PIN  = 13
- GPIO.setup(KEY_PRESS_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
- 
- def main():
-  LCD = LCD_1in44.LCD()
-  Lcd_ScanDir = LCD_1in44.SCAN_DIR_DFT
-  LCD.LCD_Init(Lcd_ScanDir)
-  LCD.LCD_Clear()
- 
- ######################################################Constant
-  displaysizex = LCD_1in44.LCD_WIDTH
-  displaysizey = LCD_1in44.LCD_HEIGHT
- 
- ######################################################first
-  lastpicturesave = 999999999
-  lastping = 0
-  pinglocalcolor = 'YELLOW'
-  pinginternetcolor = 'YELLOW'
-  borderstartsatx = 33 - 4
-  marqueepos = 0
-  marqueewait = 0
- 
-  while True:
- ####################################################Prüfungen
-   if 'hostname' in locals():
-    hostname = hostname
-   else:
-    hostname = str(socket.gethostname()).upper()
-   if 'ip' in locals():
-    ip = ip
-   else:
-    ip = str((([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) + ["no IP found"])[0])
- 
- #####################################################Bild generieren
-   image = Image.new("RGB", (LCD.width, LCD.height), "BLACK")
-   draw = ImageDraw.Draw(image)
- 
-   if GPIO.input(KEY_PRESS_PIN) == 0:
-    draw.text(( 0 , 0), "Hi :-)", fill = 'RED')
- 
- #####################################################Bild generieren
- 
-   posx = 0
- 
-   ###Hostname
+except:
+ sys.exit('exit: modules from waveshare not found')
+
+##########import config.json
+try:
+ with open(os.path.split(os.path.abspath(__file__))[0] + '/config.json','r') as file:
+  cf = json.loads(file.read())
+except:
+ sys.exit('exit: The configuration file ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json does not exist or has incorrect content. Please rename the file config.json.example to config.json and change the content as required ')
+
+def main():
+ LCD = LCD_1in44.LCD()
+ Lcd_ScanDir = LCD_1in44.SCAN_DIR_DFT
+ LCD.LCD_Init(Lcd_ScanDir)
+ LCD.LCD_Clear()
+
+##########set variables for first run
+#currently no need :-)
+
+ while True:
+##########get system informiation only one time at start
+  try: hostname
+  except: hostname = str(socket.gethostname()).upper()
+  try: ip
+  except: ip = str((([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) + ["no IP found"])[0])
+
+##########prepare blank image
+  image = Image.new("RGB", (LCD.width, LCD.height), cf["backgroundcolor"])
+  draw = ImageDraw.Draw(image)
+
+##########add lots of compotents to image
+  posx = 0
+
+  ##########component hostname
+  if 'hostname' in cf["components"]:
+   
    if os.path.isfile(cf["ttffont"]):
     ttffontheader = ImageFont.truetype(cf["ttffont"], 20)
     width, height = draw.textsize(str(hostname), font=ttffontheader)
-    draw.text( (((displaysizex-width)/2) , 0), str(hostname), font=ttffontheader, fill = 'YELLOW')
+    draw.text( (((LCD_1in44.LCD_WIDTH-width)/2) , -4), str(hostname), font=ttffontheader, fill = 'YELLOW')
    else:
     width, height = draw.textsize(str(hostname))
     imagehostname = Image.new("RGB", (width, height), "BLACK")
@@ -105,18 +81,28 @@ else:
     drawimagehostname.text((0,0), hostname , fill = 'YELLOW')
     factor=2
     imagehostname = imagehostname.resize((int(width*factor), int(height*factor)))
-    image.paste(imagehostname,((int((displaysizex-(width*2))/2)),0))
-   posx = posx + 20
-   
-   ###Date
+    image.paste(imagehostname,((int((LCD_1in44.LCD_WIDTH-(width*2))/2)),0))
+   posx = posx + 14
+  
+  ##########component currentdate
+  if 'currentdate' in cf["components"]:
    draw.text((0,posx), "Date:" + datetime.date.today().strftime('%a')[:2] + datetime.date.today().strftime(', %d. %b.\'%y') , fill = 'WHITE')
    posx = posx + 10
-   
-   ###IP
+  
+  ##########component currenttime
+  if 'currenttime' in cf["components"]:
+   draw.text((0,posx), "Time:" + time.strftime('%H:%M:%S', time.localtime()) , fill = 'WHITE')
+   posx = posx + 10
+  
+  ##########component ip
+  if 'ip' in cf["components"]:
    draw.text((0,posx), "IP  :" + ip , fill = 'WHITE')
    posx = posx + 10
-   
-   ###Ping
+  
+  ##########component ping
+  if 'ping' in cf["components"]:
+   try: lastping
+   except: lastping = 0
    pinglocal = pinginternet = "offline"
    if time.time() >= lastping + cf["pingintervall"]: #Ping systems all x seconds
     if os.system("ping -c 1 " + cf["localpingdestination"] + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
@@ -124,13 +110,14 @@ else:
     if os.system("ping -c 1 " + cf["remotepingdestination"] + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
     else: pinginternetcolor = 'RED'
     lastping = int(time.time())
-   draw.rectangle((0, posx + 11) + (int( displaysizex / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
+   draw.rectangle((0, posx + 11) + (int( LCD_1in44.LCD_WIDTH / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
    draw.text((0,posx), "Ping:     ,", fill = 'WHITE')
    draw.text((0,posx), "     LOCAL", fill = pinglocalcolor)
    draw.text((0,posx), "           REMOTE", fill = pinginternetcolor)
    posx = posx + 13
- 
-   ###PI Board
+
+  ##########component board
+  if 'board' in cf["components"]:
    if 'piboardinformation' not in locals():
     fobj = open("/sys/firmware/devicetree/base/model")
     output = ''
@@ -145,66 +132,71 @@ else:
     piboardinformation = output
    draw.text((0,posx), "Main:" + piboardinformation, fill = 'WHITE')
    posx = posx + 10
- 
-   ###CPU Usage
+
+  ##########component cpu
+  if 'cpu' in cf["components"]:
    usage = int(float(psutil.cpu_percent()))
    draw.text((0,posx), "CPU :", fill = 'WHITE')
-   width = (displaysizex - 1 - borderstartsatx) /100 * usage
+   width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"] ) /100 * usage
    fontcolor = 'WHITE'
    if usage >= 80: fillcolor = 'RED'
    elif usage >= 60: fillcolor = 'YELLOW'
    else: fillcolor = 'GREEN'
    if fillcolor == 'YELLOW': fontcolor = 'GREY'
-   draw.rectangle((borderstartsatx, posx) + (borderstartsatx + width, posx + 10), fill=fillcolor, width=0)
-   draw.rectangle((borderstartsatx, posx) + (displaysizex-1, posx + 10), outline='WHITE', width=1)
+   draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
+   draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
    draw.text((70,posx), str(usage) + "%", fill = fontcolor)
    posx = posx + 10
- 
-   ###RAM Usage
+
+  ##########component ram
+  if 'ram' in cf["components"]:
    gpuram = int(re.sub('[^0-9]+', '', str(subprocess.check_output('/usr/bin/vcgencmd get_mem gpu|cut -d= -f2', shell=True))))
    totalmem = round(psutil.virtual_memory()[0] / 1000 ** 2) + gpuram
    usagemem = round((psutil.virtual_memory()[0] - psutil.virtual_memory()[1]) / 1000 ** 2)
    usageratemem = psutil.virtual_memory()[2]
    usagerategpuram = 100 / (totalmem + gpuram) * gpuram
    draw.text((0,posx), "RAM :", fill = 'WHITE')
-   width = (displaysizex - 1 - borderstartsatx) /100 * usageratemem
-   gpuwidth = (displaysizex - 1 - borderstartsatx) /100 * usagerategpuram
+   width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usageratemem
+   gpuwidth = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagerategpuram
    fontcolor = 'WHITE'
    if usageratemem >= 80: fillcolor = 'RED'
    elif usageratemem >= 60: fillcolor = 'YELLOW'
    else: fillcolor = 'GREEN'
    if fillcolor == 'YELLOW': fontcolor = 'GREY'
-   draw.rectangle((borderstartsatx, posx) + (borderstartsatx + width, posx + 10), fill=fillcolor, width=0)
-   draw.rectangle((displaysizex-1-gpuwidth, posx) + (displaysizex-1, posx + 3), fill='RED', width=1)
-   draw.rectangle((displaysizex-1-gpuwidth, posx + 4) + (displaysizex-1, posx + 6), fill='GREEN', width=1)
-   draw.rectangle((displaysizex-1-gpuwidth, posx + 7) + (displaysizex-1, posx + 10), fill='BLUE', width=1)
-   draw.rectangle((borderstartsatx, posx) + (displaysizex-1, posx + 10), outline='WHITE', width=1)
+   draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
+   draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx) + (LCD_1in44.LCD_WIDTH-1, posx + 3), fill='RED', width=1)
+   draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx + 4) + (LCD_1in44.LCD_WIDTH-1, posx + 6), fill='GREEN', width=1)
+   draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx + 7) + (LCD_1in44.LCD_WIDTH-1, posx + 10), fill='BLUE', width=1)
+   draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
    draw.text((40,posx), str(usagemem) + "+" + str(gpuram) + "/" + str(totalmem) + "MB", fill = fontcolor)
    posx = posx + 10
-   
-   ###GPU RAM:
+  
+  ##########component gpu
+  if 'gpu' in cf["components"]:
    gpuram = re.sub('[^0-9]+', '', str(subprocess.check_output('/usr/bin/vcgencmd get_mem gpu|cut -d= -f2', shell=True)))
    fontcolor = 'WHITE'
    draw.text((0,posx), "GPU: " + str(gpuram) + "MB", fill = fontcolor)
    posx = posx + 10
- 
-   ###Temp
+
+  ##########component temperatur
+  if 'temperatur' in cf["components"]:
    tFile = open('/sys/class/thermal/thermal_zone0/temp')
    temp = int(format(int(float(tFile.read())/1000),"d"))
    draw.text((0,posx), "Temp:", fill = 'WHITE')
-   width = (displaysizex - 1 - borderstartsatx) / (90 - 30) * (temp - 30)
+   width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) / (90 - 30) * (temp - 30)
    fontcolor = 'WHITE'
    if width < 0: width = 0
    if temp >= 70: fillcolor = 'RED'
    elif temp >= 60: fillcolor = 'YELLOW'
    else: fillcolor = 'GREEN'
    if fillcolor == 'YELLOW': fontcolor = 'GREY'
-   draw.rectangle((borderstartsatx, posx) + (borderstartsatx + width, posx + 10), fill=fillcolor, width=0)
-   draw.rectangle((borderstartsatx, posx) + (displaysizex-1, posx + 10), outline='WHITE', width=1)
+   draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
+   draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
    draw.text((70,posx), str(temp) + '°C' , fontcolor)
    posx = posx + 10
- 
-   ###SD Usage
+
+  ##########component sd
+  if 'sd' in cf["components"]:
    totalsd = psutil.disk_usage('/').total
    freesd = psutil.disk_usage('/').free
    usagesd = totalsd - freesd
@@ -218,7 +210,7 @@ else:
    
    usagesd = round(usagesd / (1024.0 ** 3),1)
    draw.text((0,posx), "SD  :", fill = 'WHITE')
-   width = (displaysizex - 1 - borderstartsatx) /100 * usagesdpercent
+   width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagesdpercent
    fontcolor = 'WHITE'
    if usagesdpercent >= 90: fillcolor = 'RED'
    elif usagesdpercent >= 70:
@@ -226,12 +218,19 @@ else:
     fontcolor = 'GRAY'
    elif usagesdpercent < 50 and totalsd > 4: fillcolor = 'PURPLE'
    else: fillcolor = 'GREEN'
-   draw.rectangle((borderstartsatx, posx) + (borderstartsatx + width, posx + 10), fill=fillcolor, width=0)
-   draw.rectangle((borderstartsatx, posx) + (displaysizex-1, posx + 10), outline='WHITE', width=1)
+   draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
+   draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
    draw.text((55,posx), str(usagesd) + "/" + str(totalsd) + "GB", fill = fontcolor)
    posx = posx + 10
-   
-   ###Last Image
+  
+  ##########component lastimage
+  #Shows the latest file from a specified directory. If necessary, this is output as scrolling text.
+  #I use this to see which filenames the latest image of the SD card has. 
+  if 'lastimage' in cf["components"]:
+   try: marqueepos
+   except: marqueepos = 0
+   try: marqueewait
+   except: marqueewait = 0
    if 'latest_file' not in locals():
     list_of_files = glob.glob(cf["checkforlatestfile"])
    if len(list_of_files) == 0:
@@ -242,24 +241,32 @@ else:
     latest_file_name = os.path.basename(latest_file)
     latest_file_name_text = 'IMG: ' + latest_file_name
     marqueewidth, marqueewidthheight = draw.textsize(latest_file_name_text)
-    if marqueepos <= displaysizex - marqueewidth: 
+    if marqueepos <= LCD_1in44.LCD_WIDTH - marqueewidth: 
      marqueewait = marqueewait + 1
     else: marqueepos = marqueepos - 2
-    if marqueewait > 5 / cf["imagerefresh"]: 
+    if marqueewait > cf["scrollingtextwait"] / cf["imagerefresh"]: 
      marqueepos = 0
      marqueewait = 0
     draw.text((marqueepos ,posx), latest_file_name_text, fill = fontcolor) 
    posx = posx + 10
- 
- #####################################################Bild ausgeben
-   image = image.resize((displaysizex, displaysizey))
-   LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
-   time.sleep(cf["imagerefresh"])
- 
-   
-   if time.time() >= lastpicturesave + cf["picturesaveintervall"]: #Saves image all x seconds
-    image.save(cf["saveimagedestination"],optimize=True)
-    lastpicturesave = time.time()
+
+#####################################################Bild ausgeben
+  #Only necessary if the content of the picture has a higher resolution than the 120x120 pixels of the display.
+  #image = image.resize((LCD_1in44.LCD_WIDTH, LCD_1in44.LCD_HEIGHT))
+  
+  if cf['rotate'] == 90: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
+  elif cf['rotate'] == 180: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_180),0,0)
+  elif cf['rotate'] == 270: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_270),0,0)
+  else: LCD.LCD_ShowImage(image,0,0)
+  
+  time.sleep(cf["imagerefresh"])
+
+  try: lastpicturesave
+  except: lastpicturesave = 999999999
+  
+  if time.time() >= lastpicturesave + cf["picturesaveintervall"]:
+   image.save(cf["saveimagedestination"],optimize=True)
+   lastpicturesave = time.time()
 
 
 if __name__ == '__main__':
