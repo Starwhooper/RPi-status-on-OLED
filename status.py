@@ -24,8 +24,11 @@ import json
 runninginstances = 0
 for p in psutil.process_iter():
  if len(p.cmdline()) == 2:
-  if p.cmdline()[1] == os.path.abspath(__file__):
-   runninginstances = runninginstances + 1
+  if p.cmdline()[0] == '/usr/bin/python3':
+   if p.cmdline()[1] == os.path.abspath(__file__):
+    runninginstances = runninginstances + 1
+#    print(p.cmdline()[0])
+#    print(p.cmdline()[1])
 if runninginstances >= 2:
  sys.exit('exit: is already running')
 
@@ -105,9 +108,9 @@ def main():
    except: lastping = 0
    pinglocal = pinginternet = "offline"
    if time.time() >= lastping + cf["pingintervall"]: #Ping systems all x seconds
-    if os.system("ping -c 1 " + cf["localpingdestination"] + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
+    if os.system("ping -c 1 -W 1 " + cf["localpingdestination"] + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
     else: pinglocalcolor = 'RED'
-    if os.system("ping -c 1 " + cf["remotepingdestination"] + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
+    if os.system("ping -c 1 -W 1 " + cf["remotepingdestination"] + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
     else: pinginternetcolor = 'RED'
     lastping = int(time.time())
    draw.rectangle((0, posx + 11) + (int( LCD_1in44.LCD_WIDTH / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
