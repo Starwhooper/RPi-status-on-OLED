@@ -20,7 +20,7 @@ import time
 import subprocess
 import json
 
-##########ensure that only one instance is running at the same time 
+##########ensure that only one instance is running at the same time
 runninginstances = 0
 for p in psutil.process_iter():
  if len(p.cmdline()) == 2:
@@ -32,7 +32,7 @@ for p in psutil.process_iter():
 if runninginstances >= 2:
  sys.exit('exit: is already running')
 
-##########import modules from waveshare 
+##########import modules from waveshare
 sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/waveshare')
 try:
  import LCD_1in44
@@ -46,6 +46,11 @@ try:
   cf = json.loads(file.read())
 except:
  sys.exit('exit: The configuration file ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json does not exist or has incorrect content. Please rename the file config.json.example to config.json and change the content as required ')
+
+try:
+ cf["components"][0]
+except:
+ sys.exit('exit: in ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json is no "components" empty, checkout config.json.example')
 
 def main():
  LCD = LCD_1in44.LCD()
@@ -72,7 +77,7 @@ def main():
 
   ##########component hostname
   if 'hostname' in cf["components"]:
-   
+
    if os.path.isfile(cf["ttffont"]):
     ttffontheader = ImageFont.truetype(cf["ttffont"], 20)
     width, height = draw.textsize(str(hostname), font=ttffontheader)
@@ -86,22 +91,22 @@ def main():
     imagehostname = imagehostname.resize((int(width*factor), int(height*factor)))
     image.paste(imagehostname,((int((LCD_1in44.LCD_WIDTH-(width*2))/2)),0))
    posx = posx + 14
-  
+
   ##########component currentdate
   if 'currentdate' in cf["components"]:
    draw.text((0,posx), "Date:" + datetime.date.today().strftime('%a')[:2] + datetime.date.today().strftime(', %d. %b.\'%y') , fill = 'WHITE')
    posx = posx + 10
-  
+
   ##########component currenttime
   if 'currenttime' in cf["components"]:
    draw.text((0,posx), "Time:" + time.strftime('%H:%M:%S', time.localtime()) , fill = 'WHITE')
    posx = posx + 10
-  
+
   ##########component ip
   if 'ip' in cf["components"]:
    draw.text((0,posx), "IP  :" + ip , fill = 'WHITE')
    posx = posx + 10
-  
+
   ##########component ping
   if 'ping' in cf["components"]:
    try: lastping
@@ -173,7 +178,7 @@ def main():
    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
    draw.text((40,posx), str(usagemem) + "+" + str(gpuram) + "/" + str(totalmem) + "MB", fill = fontcolor)
    posx = posx + 10
-  
+
   ##########component gpu
   if 'gpu' in cf["components"]:
    gpuram = re.sub('[^0-9]+', '', str(subprocess.check_output('/usr/bin/vcgencmd get_mem gpu|cut -d= -f2', shell=True)))
@@ -204,13 +209,13 @@ def main():
    freesd = psutil.disk_usage('/').free
    usagesd = totalsd - freesd
    usagesdpercent = 100 / totalsd * usagesd
-   
+
    if totalsd >= 17000000000: totalsd = 32
    elif totalsd >= 9000000000: totalsd = 16
    elif totalsd >= 5000000000: totalsd = 8
    elif totalsd >= 3000000000: totalsd = 4
    else: totalsd = 2
-   
+
    usagesd = round(usagesd / (1024.0 ** 3),1)
    draw.text((0,posx), "SD  :", fill = 'WHITE')
    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagesdpercent
@@ -225,10 +230,10 @@ def main():
    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
    draw.text((55,posx), str(usagesd) + "/" + str(totalsd) + "GB", fill = fontcolor)
    posx = posx + 10
-  
+
   ##########component lastimage
   #Shows the latest file from a specified directory. If necessary, this is output as scrolling text.
-  #I use this to see which filenames the latest image of the SD card has. 
+  #I use this to see which filenames the latest image of the SD card has.
   if 'lastimage' in cf["components"]:
    try: marqueepos
    except: marqueepos = 0
@@ -237,38 +242,39 @@ def main():
    if 'latest_file' not in locals():
     list_of_files = glob.glob(cf["checkforlatestfile"])
    if len(list_of_files) == 0:
-    draw.text((marqueepos ,posx), 'IMG :', fill = fontcolor) 
-    draw.text((marqueepos ,posx), '     missed', fill = 'RED') 
+    draw.text((marqueepos ,posx), 'IMG :', fill = fontcolor)
+    draw.text((marqueepos ,posx), '     missed', fill = 'RED')
    else:
     latest_file = max(list_of_files, key=os.path.getctime)
     latest_file_name = os.path.basename(latest_file)
     latest_file_name_text = 'IMG: ' + latest_file_name
     marqueewidth, marqueewidthheight = draw.textsize(latest_file_name_text)
-    if marqueepos <= LCD_1in44.LCD_WIDTH - marqueewidth: 
+    if marqueepos <= LCD_1in44.LCD_WIDTH - marqueewidth:
      marqueewait = marqueewait + 1
     else: marqueepos = marqueepos - 2
-    if marqueewait > cf["scrollingtextwait"] / cf["imagerefresh"]: 
+    if marqueewait > cf["scrollingtextwait"] / cf["imagerefresh"]:
      marqueepos = 0
      marqueewait = 0
-    draw.text((marqueepos ,posx), latest_file_name_text, fill = fontcolor) 
+    draw.text((marqueepos ,posx), latest_file_name_text, fill = fontcolor)
    posx = posx + 10
 
 #####################################################Bild ausgeben
   #Only necessary if the content of the picture has a higher resolution than the 120x120 pixels of the display.
   #image = image.resize((LCD_1in44.LCD_WIDTH, LCD_1in44.LCD_HEIGHT))
-  
+
   if cf['rotate'] == 90: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
   elif cf['rotate'] == 180: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_180),0,0)
   elif cf['rotate'] == 270: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_270),0,0)
   else: LCD.LCD_ShowImage(image,0,0)
-  
+
   time.sleep(cf["imagerefresh"])
 
   try: lastpicturesave
   except: lastpicturesave = 999999999
-  
+
   if time.time() >= lastpicturesave + cf["picturesaveintervall"]:
-   image.save(cf["saveimagedestination"],optimize=True)
+   saveimagedestination = cf["saveimagedestination"].replace("{HOSTNAME}", str(hostname()).lower())
+   image.save(saveimagedestination,optimize=True)
    lastpicturesave = time.time()
 
 

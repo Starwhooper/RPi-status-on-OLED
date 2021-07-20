@@ -22,7 +22,7 @@
 	"pingintervall": 300,
 	"remotepingdestination": "8.8.8.8",
 	"rotate": 90,
-	"saveimagedestination": "/mnt/server/status.png",
+	"saveimagedestination": "/mnt/server/status_{HOSTNAME}.png",
 	"scrollingtextwait": 5,
 	"ttffont": "/usr/share/fonts/truetype/msttcorefonts/courbd.ttf"
 }
