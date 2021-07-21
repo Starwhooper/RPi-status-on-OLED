@@ -27,7 +27,7 @@ My Raspberrys are mounted in my 19Rack:
 ## Installation ##
 needed components in Raepberry OS:
 ```bash
-sudo apt-get install python3-pip python3-pil git libatlas-base-dev
+sudo apt-get install python3-pip python3-pil git libatlas-base-dev ttf-mscorefonts-installer
 sudo pip3 install RPi.GPIO psutil numpy
 ```
 and this tool itself:
