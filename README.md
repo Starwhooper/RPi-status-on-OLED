@@ -25,6 +25,12 @@ My Raspberrys are mounted in my 19Rack:
 ```
 
 ## Installation ##
+needed Python3 components:
+```bash
+sudo apt-get install python3-pip
+sudo pip3 install RPi.GPIO psutil
+```
+and this tool itself:
 ```bash
 cd /opt
 sudo git clone https://github.com/Starwhooper/RPi-status-on-OLED
