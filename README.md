@@ -25,9 +25,9 @@ My Raspberrys are mounted in my 19Rack:
 ```
 
 ## Installation ##
-needed Python3 components:
+needed components in Raepberry OS:
 ```bash
-sudo apt-get install python3-pip
+sudo apt-get install python3-pip python3-pil git
 sudo pip3 install RPi.GPIO psutil
 ```
 and this tool itself:
