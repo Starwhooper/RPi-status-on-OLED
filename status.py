@@ -20,6 +20,12 @@ import time
 import subprocess
 import json
 
+##########import special modules and provide special errormessage
+try:
+ import numpy
+except:
+ sys.exit('needed package numpy is not aviable. Try to install it with "sudo pip3 install numpy".')
+
 ##########ensure that only one instance is running at the same time
 runninginstances = 0
 for p in psutil.process_iter():
@@ -38,7 +44,7 @@ try:
  import LCD_1in44
  import LCD_Config
 except:
- sys.exit('exit: modules from waveshare not found')
+ sys.exit('exit: modules from waveshare not found in ' + os.path.split(os.path.abspath(__file__))[0] + '/waveshare, or was found but could not load')
 
 ##########import config.json
 try:
@@ -267,16 +273,15 @@ def main():
   elif cf['rotate'] == 270: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_270),0,0)
   else: LCD.LCD_ShowImage(image,0,0)
 
-  time.sleep(cf["imagerefresh"])
+  time.sleep(int(cf["imagerefresh"]))
 
   try: lastpicturesave
   except: lastpicturesave = 999999999
 
   if time.time() >= lastpicturesave + cf["picturesaveintervall"]:
-   saveimagedestination = cf["saveimagedestination"].replace("{HOSTNAME}", str(hostname()).lower())
+   saveimagedestination = str(cf["saveimagedestination"]).replace("%HOSTNAME%", str(hostname).lower())
    image.save(saveimagedestination,optimize=True)
    lastpicturesave = time.time()
-
 
 if __name__ == '__main__':
  main()
