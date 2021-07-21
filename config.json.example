@@ -16,7 +16,7 @@
 		"lastimage"
 	],
 	"checkforlatestfile": "/mnt/server/_image/*.zip",
-	"imagerefresh": 0.2,
+	"imagerefresh": 0.8,
 	"localpingdestination": "192.168.178.10",
 	"picturesaveintervall": 3600,
 	"pingintervall": 300,
