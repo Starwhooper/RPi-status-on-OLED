@@ -25,9 +25,9 @@ My Raspberrys are mounted in my 19Rack:
 ```
 
 ## Installation ##
-needed components in Raepberry OS:
+install all needed packages to prepare the software environtent of your Raspberry Pi:
 ```bash
-sudo apt-get install python3-pip python3-pil git libatlas-base-dev ttf-mscorefonts-installer
+sudo apt-get update && sudo apt-get upgrade && sudo apt-get install python3-pip python3-pil git libatlas-base-dev ttf-mscorefonts-installer
 sudo pip3 install RPi.GPIO psutil numpy
 ```
 and this tool itself:
