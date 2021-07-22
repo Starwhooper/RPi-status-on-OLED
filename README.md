@@ -27,6 +27,8 @@ My Raspberrys are mounted in my 19Rack:
 ## Installation ##
 install all needed packages to prepare the software environtent of your Raspberry Pi:
 ```bash
+sudo rapi-cponfig
+  and enable Interface type SPI
 sudo apt-get update && sudo apt-get upgrade && sudo apt-get install python3-pip python3-pil git libatlas-base-dev ttf-mscorefonts-installer
 sudo pip3 install RPi.GPIO psutil numpy
 ```
