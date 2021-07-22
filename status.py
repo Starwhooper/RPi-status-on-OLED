@@ -23,7 +23,7 @@ import json
 ##########import special modules and provide special errormessage
 try:
  import numpy
-except:
+except ValueError:
  sys.exit('needed package numpy is not aviable. Try to install it with "sudo pip3 install numpy".')
 
 ##########ensure that only one instance is running at the same time
@@ -40,11 +40,11 @@ if runninginstances >= 2:
 
 ##########import modules from waveshare
 sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/waveshare')
-try:
- import LCD_1in44
- import LCD_Config
-except:
- sys.exit('exit: modules from waveshare not found in ' + os.path.split(os.path.abspath(__file__))[0] + '/waveshare, or was found but could not load')
+#try:
+import LCD_1in44
+import LCD_Config
+#except:
+# sys.exit('exit: modules from waveshare not found in ' + os.path.split(os.path.abspath(__file__))[0] + '/waveshare, or was found but could not load')
 
 ##########import config.json
 try:
@@ -264,10 +264,7 @@ def main():
     draw.text((marqueepos ,posx), latest_file_name_text, fill = fontcolor)
    posx = posx + 10
 
-#####################################################Bild ausgeben
-  #Only necessary if the content of the picture has a higher resolution than the 120x120 pixels of the display.
-  #image = image.resize((LCD_1in44.LCD_WIDTH, LCD_1in44.LCD_HEIGHT))
-
+#####################################################promt picture to display
   if cf['rotate'] == 90: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
   elif cf['rotate'] == 180: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_180),0,0)
   elif cf['rotate'] == 270: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_270),0,0)
@@ -278,10 +275,11 @@ def main():
   try: lastpicturesave
   except: lastpicturesave = 999999999
 
-  if time.time() >= lastpicturesave + cf["picturesaveintervall"]:
-   saveimagedestination = str(cf["saveimagedestination"]).replace("%HOSTNAME%", str(hostname).lower())
-   image.save(saveimagedestination,optimize=True)
-   lastpicturesave = time.time()
+  if 'cf["saveimagedestination"]' in globals():
+   if time.time() >= lastpicturesave + cf["picturesaveintervall"]:
+    saveimagedestination = str(cf["saveimagedestination"]).replace("%HOSTNAME%", str(hostname).lower())
+    image.save(saveimagedestination,optimize=True)
+    lastpicturesave = time.time()
 
 if __name__ == '__main__':
  main()
