@@ -1,5 +1,7 @@
 # RPi-status-on-OLED #
 
+To provide the Status of your Raspberry (tested on Zero, 2, 3 and 4) to an ST7735S OLED Display.
+
 I use this script to get a quick and up-to-date status of the system every time I walk past my Raspberry Pis.
 In this way I can see at a glance the current workload, whether problems are looming and whether the service is currently running.
 
@@ -50,13 +52,10 @@ Its also able to add it in cron via ```crontab -e```, it prevent doublicate star
 /opt/RPi-status-on-OLED/status.py
 ```
 
-## Case ##
+## Hardware ##
+### Display ###
+I choosed waveshare  1.44inch LCD HAT: https://www.waveshare.com/wiki/1.44inch_LCD_HAT
+
+### Case ###
 ![Display](https://cdn.thingiverse.com/assets/b8/cf/98/25/7c/featured_preview_RPiRack_with_lcd_and_fan.png)
 Your can get the STL File and more details regarding the Hardware here: https://www.thingiverse.com/thing:4879316
-
-
-
-
-
-
-
