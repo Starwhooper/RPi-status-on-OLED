@@ -117,10 +117,12 @@ def main():
    try: lastping
    except: lastping = 0
    pinglocal = pinginternet = "offline"
+   if len(cf["localpingdestination"]) >= 1: localpingdestination = cf["localpingdestination"]
+   else: localpingdestination = ip[0:ip.rfind('.')] + '.1'
    if time.time() >= lastping + cf["pingintervall"]: #Ping systems all x seconds
-    if os.system("ping -c 1 -W 1 " + cf["localpingdestination"] + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
+    if os.system("ping -c 1 -W 1 " + localpingdestination + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
     else: pinglocalcolor = 'RED'
-    if os.system("ping -c 1 -W 1 " + cf["remotepingdestination"] + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
+    if os.system("ping -c 1 -W 1 " + localpingdestination + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
     else: pinginternetcolor = 'RED'
     lastping = int(time.time())
    draw.rectangle((0, posx + 11) + (int( LCD_1in44.LCD_WIDTH / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
