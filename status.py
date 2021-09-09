@@ -38,14 +38,6 @@ for p in psutil.process_iter():
 if runninginstances >= 2:
  sys.exit('exit: is already running')
 
-##########import modules from waveshare
-sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/waveshare')
-#try:
-import LCD_1in44
-import LCD_Config
-#except:
-# sys.exit('exit: modules from waveshare not found in ' + os.path.split(os.path.abspath(__file__))[0] + '/waveshare, or was found but could not load')
-
 ##########import config.json
 try:
  with open(os.path.split(os.path.abspath(__file__))[0] + '/config.json','r') as file:
@@ -53,6 +45,16 @@ try:
 except:
  sys.exit('exit: The configuration file ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json does not exist or has incorrect content. Please rename the file config.json.example to config.json and change the content as required ')
 
+##########import modules from waveshare
+if cf["lcddriver"] == 'waveshare144':
+ sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/lcddriver/' + cf["lcddriver"])
+ try:
+  import LCD_1in44
+  import LCD_Config
+ except:
+  sys.exit('exit: modules from waveshare not found in ' + os.path.split(os.path.abspath(__file__))[0] + '/' + cf["lcddriver"] + ', or was found but could not load')
+
+##########check components
 try:
  cf["components"][0]
 except:

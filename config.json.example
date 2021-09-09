@@ -1,4 +1,5 @@
 {
+	"lcddriver": "waveshare144",
 	"backgroundcolor": "BLACK",
 	"boxmarginleft": 27,
 	"components": [
