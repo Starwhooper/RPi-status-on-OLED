@@ -277,13 +277,15 @@ def main():
   time.sleep(int(cf["imagerefresh"]))
 
   try: lastpicturesave
-  except: lastpicturesave = 999999999
+  except: lastpicturesave = 0
 
-  if 'cf["saveimagedestination"]' in globals():
-   if time.time() >= lastpicturesave + cf["picturesaveintervall"]:
+  try:
+   if time.time() >= lastpicturesave + int(cf["picturesaveintervall"]):
     saveimagedestination = str(cf["saveimagedestination"]).replace("%HOSTNAME%", str(hostname).lower())
     image.save(saveimagedestination,optimize=True)
     lastpicturesave = time.time()
+  except:
+   1+1
 
 if __name__ == '__main__':
  main()
