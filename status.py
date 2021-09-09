@@ -88,7 +88,7 @@ def main():
    if os.path.isfile(cf["ttffont"]):
     ttffontheader = ImageFont.truetype(cf["ttffont"], 20)
     width, height = draw.textsize(str(hostname), font=ttffontheader)
-    draw.text( (((LCD_1in44.LCD_WIDTH-width)/2) , -4), str(hostname), font=ttffontheader, fill = 'YELLOW')
+    draw.text( (((LCD_1in44.LCD_WIDTH-width)/2) , 0), str(hostname), font=ttffontheader, fill = 'YELLOW')
    else:
     width, height = draw.textsize(str(hostname))
     imagehostname = Image.new("RGB", (width, height), "BLACK")
