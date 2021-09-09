@@ -31,7 +31,7 @@ install all needed packages to prepare the software environtent of your Raspberr
 ```bash
 sudo rapi-cponfig
   and enable Interface type SPI
-sudo apt-get update && sudo apt-get upgrade && sudo apt-get install python3-pip python3-pil git libatlas-base-dev ttf-mscorefonts-installer
+sudo apt-get update && sudo apt-get upgrade && sudo apt-get install python3-pip python3-pil git libatlas-base-dev
 sudo pip3 install RPi.GPIO psutil numpy
 ```
 and this tool itself:
