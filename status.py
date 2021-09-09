@@ -249,7 +249,8 @@ def main():
    try: marqueewait
    except: marqueewait = 0
    if 'latest_file' not in locals():
-    list_of_files = glob.glob(cf["checkforlatestfile"])
+    checkforlatestfile = str(cf["checkforlatestfile"]).replace("%HOSTNAME%", str(hostname).lower())
+    list_of_files = glob.glob(checkforlatestfile)
    if len(list_of_files) == 0:
     draw.text((marqueepos ,posx), 'IMG :', fill = fontcolor)
     draw.text((marqueepos ,posx), '     missed', fill = 'RED')
