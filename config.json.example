@@ -25,5 +25,5 @@
 	"rotate": 90,
 	"saveimagedestination": "/mnt/server/status_{HOSTNAME}.png",
 	"scrollingtextwait": 5,
-	"ttffont": "/usr/share/fonts/truetype/msttcorefonts/courbd.ttf"
+	"ttffont": "/opt/RPi-status-on-OLED/font/Courier Prime Bold.ttf"
 }
