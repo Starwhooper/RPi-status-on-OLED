@@ -54,7 +54,15 @@ Its also able to add it in cron via ```crontab -e```, it prevent doublicate star
 
 ## Hardware ##
 ### Display ###
-I choosed waveshare  1.44inch LCD HAT: https://www.waveshare.com/wiki/1.44inch_LCD_HAT
+In case you choose waveshare 1.44inch LCD HAT https://www.waveshare.com/wiki/1.44inch_LCD_HAT, you have to wire 1:1 following ports:
+* Raspberry Pin 1 (3,3V)
+* Raspberry Pin 6 (Ground)
+* Raspberry Pin 13 (GPIO 27)
+* Raspberry Pin 18 (GPIO 24)
+* Raspberry Pin 19 (SPI0 MOSI GPIO 10)
+* Raspberry Pin 22 (GPIO 25)
+* Raspberry Pin 23 (SPI0 SCLK GPIO 11)
+
 
 ### Case ###
 ![Display](https://cdn.thingiverse.com/assets/b8/cf/98/25/7c/featured_preview_RPiRack_with_lcd_and_fan.png)
