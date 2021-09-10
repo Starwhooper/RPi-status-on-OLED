@@ -62,6 +62,7 @@ In case you choose waveshare 1.44inch LCD HAT https://www.waveshare.com/wiki/1.4
 * Raspberry Pin 19 (SPI0 MOSI GPIO 10)
 * Raspberry Pin 22 (GPIO 25)
 * Raspberry Pin 23 (SPI0 SCLK GPIO 11)
+* Raspberry Pin 24 (SPI0 CE0 GPIO 8)
 
 
 ### Case ###
