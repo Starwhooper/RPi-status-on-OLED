@@ -133,6 +133,25 @@ def main():
    draw.text((0,posx), "           REMOTE", fill = pinginternetcolor)
    posx = posx + 13
 
+  ##########component ipping
+  if 'ipping' in cf["components"]:
+   draw.text((0,posx), "IP  :" + ip , fill = 'WHITE')
+   try: lastping
+   except: lastping = 0
+   pinglocal = pinginternet = "offline"
+   if len(cf["localpingdestination"]) >= 1: localpingdestination = cf["localpingdestination"]
+   else: localpingdestination = ip[0:ip.rfind('.')] + '.1'
+   if time.time() >= lastping + cf["pingintervall"]: #Ping systems all x seconds
+    if os.system("ping -c 1 -W 1 " + localpingdestination + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
+    else: pinglocalcolor = 'RED'
+    if os.system("ping -c 1 -W 1 " + localpingdestination + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
+    else: pinginternetcolor = 'RED'
+    lastping = int(time.time())
+   draw.rectangle((0, posx + 11) + (int( LCD_1in44.LCD_WIDTH / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
+   draw.text((0,posx), "  L", fill = pinglocalcolor)
+   draw.text((0,posx), "   R", fill = pinginternetcolor)
+   posx = posx + 13
+
   ##########component board
   if 'board' in cf["components"]:
    if 'piboardinformation' not in locals():
