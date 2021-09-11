@@ -52,6 +52,13 @@ Its also able to add it in cron via ```crontab -e```, it prevent doublicate star
 /opt/RPi-status-on-OLED/status.py
 ```
 
+## Update ##
+If you already use it, feel free to update with
+```bash
+cd /opt/RPi-status-on-OLED
+sudo git pull origin main
+```
+
 ## Hardware ##
 ### Display ###
 In case you choose waveshare 1.44inch LCD HAT https://www.waveshare.com/wiki/1.44inch_LCD_HAT, you have to wire 1:1 following ports:
