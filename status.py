@@ -44,6 +44,9 @@ try:
   cf = json.loads(file.read())
 except:
  sys.exit('exit: The configuration file ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json does not exist or has incorrect content. Please rename the file config.json.example to config.json and change the content as required ')
+##########set default
+try: cf["fontcolor"];
+except: cf["fontcolor"] = 'WHITE';
 
 ##########import modules from waveshare
 if cf["lcddriver"] == 'waveshare144':
@@ -101,17 +104,17 @@ def main():
 
   ##########component currentdate
   if 'currentdate' in cf["components"]:
-   draw.text((0,posx), "Date:" + datetime.date.today().strftime('%a')[:2] + datetime.date.today().strftime(', %d. %b.\'%y') , fill = 'WHITE')
+   draw.text((0,posx), "Date:" + datetime.date.today().strftime('%a')[:2] + datetime.date.today().strftime(', %d. %b.\'%y') , fill = cf["fontcolor"])
    posx = posx + 10
 
   ##########component currenttime
   if 'currenttime' in cf["components"]:
-   draw.text((0,posx), "Time:" + time.strftime('%H:%M:%S', time.localtime()) , fill = 'WHITE')
+   draw.text((0,posx), "Time:" + time.strftime('%H:%M:%S', time.localtime()) , fill = cf["fontcolor"])
    posx = posx + 10
 
   ##########component ip
   if 'ip' in cf["components"]:
-   draw.text((0,posx), "IP  :" + ip , fill = 'WHITE')
+   draw.text((0,posx), "IP  :" + ip , fill = cf["fontcolor"])
    posx = posx + 10
 
   ##########component ping
@@ -128,14 +131,14 @@ def main():
     else: pinginternetcolor = 'RED'
     lastping = int(time.time())
    draw.rectangle((0, posx + 11) + (int( LCD_1in44.LCD_WIDTH / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
-   draw.text((0,posx), "Ping:     ,", fill = 'WHITE')
+   draw.text((0,posx), "Ping:     ,", fill = cf["fontcolor"])
    draw.text((0,posx), "     LOCAL", fill = pinglocalcolor)
    draw.text((0,posx), "           REMOTE", fill = pinginternetcolor)
    posx = posx + 13
 
   ##########component ipping
   if 'ipping' in cf["components"]:
-   draw.text((0,posx), "IP  :" + ip , fill = 'WHITE')
+   draw.text((0,posx), "IP  :" + ip , fill = cf["fontcolor"])
    try: lastping
    except: lastping = 0
    pinglocal = pinginternet = "offline"
@@ -166,13 +169,13 @@ def main():
     output = output.replace("  ", " ")
     output = re.sub('[^a-zA-Z0-9. ]+', '', output)
     piboardinformation = output
-   draw.text((0,posx), "Main:" + piboardinformation, fill = 'WHITE')
+   draw.text((0,posx), "Main:" + piboardinformation, fill = cf["fontcolor"])
    posx = posx + 10
 
   ##########component cpu
   if 'cpu' in cf["components"]:
    usage = int(float(psutil.cpu_percent()))
-   draw.text((0,posx), "CPU :", fill = 'WHITE')
+   draw.text((0,posx), "CPU :", fill = cf["fontcolor"])
    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"] ) /100 * usage
    fontcolor = 'WHITE'
    if usage >= 80: fillcolor = 'RED'
@@ -191,7 +194,7 @@ def main():
    usagemem = round((psutil.virtual_memory()[0] - psutil.virtual_memory()[1]) / 1000 ** 2)
    usageratemem = psutil.virtual_memory()[2]
    usagerategpuram = 100 / (totalmem + gpuram) * gpuram
-   draw.text((0,posx), "RAM :", fill = 'WHITE')
+   draw.text((0,posx), "RAM :", fill = cf["fontcolor"])
    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usageratemem
    gpuwidth = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagerategpuram
    fontcolor = 'WHITE'
@@ -218,7 +221,7 @@ def main():
   if 'temperatur' in cf["components"]:
    tFile = open('/sys/class/thermal/thermal_zone0/temp')
    temp = int(format(int(float(tFile.read())/1000),"d"))
-   draw.text((0,posx), "Temp:", fill = 'WHITE')
+   draw.text((0,posx), "Temp:", fill = cf["fontcolor"])
    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) / (90 - 30) * (temp - 30)
    fontcolor = 'WHITE'
    if width < 0: width = 0
@@ -245,7 +248,7 @@ def main():
    else: totalsd = 2
 
    usagesd = round(usagesd / (1024.0 ** 3),1)
-   draw.text((0,posx), "SD  :", fill = 'WHITE')
+   draw.text((0,posx), "SD  :", fill = cf["fontcolor"])
    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagesdpercent
    fontcolor = 'WHITE'
    if usagesdpercent >= 90: fillcolor = 'RED'
@@ -271,7 +274,7 @@ def main():
     checkforlatestfile = str(cf["checkforlatestfile"]).replace("%HOSTNAME%", str(hostname).lower())
     list_of_files = glob.glob(checkforlatestfile)
    if len(list_of_files) == 0:
-    draw.text((marqueepos ,posx), 'IMG :', fill = fontcolor)
+    draw.text((marqueepos ,posx), 'IMG :', fill = cf["fontcolor"])
     draw.text((marqueepos ,posx), '     missed', fill = 'RED')
    else:
     latest_file = max(list_of_files, key=os.path.getctime)
@@ -284,7 +287,7 @@ def main():
     if marqueewait > cf["scrollingtextwait"] / cf["imagerefresh"]:
      marqueepos = 0
      marqueewait = 0
-    draw.text((marqueepos ,posx), latest_file_name_text, fill = fontcolor)
+    draw.text((marqueepos ,posx), latest_file_name_text, fill = cf["fontcolor"])
    posx = posx + 10
 
 #####################################################promt picture to display

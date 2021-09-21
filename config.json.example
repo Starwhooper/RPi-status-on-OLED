@@ -1,6 +1,7 @@
 {
 	"lcddriver": "waveshare144",
 	"backgroundcolor": "BLACK",
+	"fontcolor": "WHITE",
 	"boxmarginleft": 27,
 	"components": [
 		"hostname",
