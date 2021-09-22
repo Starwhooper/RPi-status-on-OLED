@@ -99,7 +99,8 @@ def main():
    wp = wp.resize((new_width, new_height))
    move_left = int((LCD.width - new_width) / 2)
    move_top = int((LCD.height - new_height) / 2)
-   image.paste(wp,(move_left,move_top))
+   try: image.paste(wp,(move_left,move_top))
+   except: 1
 
   else:
 
