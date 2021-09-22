@@ -83,10 +83,23 @@ def main():
   draw = ImageDraw.Draw(image)
 
   if int(time.strftime('%S')[-1]) == 1:
+
    wp_file = os.path.split(os.path.abspath(__file__))[0] + '/wp.jpg'
    wp = Image.open(wp_file)
-   wp = wp.resize((LCD.width, LCD.height))
-   image.paste(wp)
+
+   factor_w = round(100/wp.width * LCD.width)
+   factor_h = round(100/wp.height * LCD.height)
+
+   if factor_w <= factor_h:
+    new_width = int(wp.width * factor_w / 100)
+    new_height = int(wp.height * factor_w / 100)
+   else:
+    new_width = int(wp.width * factor_h / 100)
+    new_height = int(wp.height * factor_h / 100)
+   wp = wp.resize((new_width, new_height))
+   move_left = int((LCD.width - new_width) / 2)
+   move_top = int((LCD.height - new_height) / 2)
+   image.paste(wp,(move_left,move_top))
 
   else:
 
