@@ -84,10 +84,11 @@ def main():
 
   if int(time.strftime('%S')[-1]) == 1:
    wp_file = os.path.split(os.path.abspath(__file__))[0] + '/wp.jpg'
-   try: image = Image.open(wp_file)
-   except: 1
-  else:
+   wp = Image.open(wp_file)
+   wp = wp.resize((LCD.width, LCD.height))
+   image.paste(wp)
 
+  else:
 
  ##########add lots of compotents to image
    posx = 0
