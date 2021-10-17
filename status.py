@@ -252,6 +252,19 @@ def main():
     draw.text((55,posx), str(usagesd) + "/" + str(totalsd) + "GB", fill = fontcolor)
     posx = posx + 10
 
+   ##########uptime
+   if 'uptime' in cf["components"]:
+
+    def formatTimeAgo(seconds):
+     if seconds < 60: return "%i seconds" % seconds
+     elif seconds < 3600: return "%i minutes" % (seconds/float(60))
+     elif seconds < (3600*24): return "%.1f hours" % (seconds/float(3600))
+     elif seconds < (3600*24*7): return "%.1f days" % (seconds/float(3600*24))
+     else: return "%.1f Weeks" % (seconds/float(3600*24*7))
+
+    draw.text((0,posx), "uptm:" + formatTimeAgo(time.time() - psutil.boot_time()) , fill = cf["fontcolor"])
+    posx = posx + 10
+
    ##########component lastimage
    #Shows the latest file from a specified directory. If necessary, this is output as scrolling text.
    #I use this to see which filenames the latest image of the SD card has.
