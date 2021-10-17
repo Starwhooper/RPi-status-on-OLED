@@ -7,24 +7,24 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
-import datetime
-import glob
-import os
-import re
-import psutil
-import requests
-import RPi.GPIO as GPIO
-import socket
-import sys
-import time
-import subprocess
-import json
-
-##########import special modules and provide special errormessage
 try:
+ import datetime
+ import glob
+ import os
+ import re
+ import psutil
+ import requests
+ import RPi.GPIO as GPIO
+ import socket
+ import sys
+ import time
+ import subprocess
+ import json
+ import netifaces
  import numpy
-except ValueError:
- sys.exit('needed package numpy is not aviable. Try to install it with "sudo pip3 install numpy".')
+except:
+ sys.exit('any needed package is not aviable. PLease check README.md to check which components shopuld be installed via pip3".')
+
 
 ##########ensure that only one instance is running at the same time
 runninginstances = 0
@@ -33,8 +33,6 @@ for p in psutil.process_iter():
   if p.cmdline()[0] == '/usr/bin/python3':
    if p.cmdline()[1] == os.path.abspath(__file__):
     runninginstances = runninginstances + 1
-#    print(p.cmdline()[0])
-#    print(p.cmdline()[1])
 if runninginstances >= 2:
  sys.exit('exit: is already running')
 
@@ -69,27 +67,22 @@ def main():
  LCD.LCD_Init(Lcd_ScanDir)
  LCD.LCD_Clear()
 
-##########set variables for first run
-#currently no need :-)
-
  while True:
 ##########get system informiation only one time at start
   try: hostname
   except: hostname = str(socket.gethostname()).upper()
-  ip = str((([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) + ["no IP found"])[0])
+  try: ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
+  except: ip = 'noip'
 
 ##########prepare blank image
   image = Image.new("RGB", (LCD.width, LCD.height), cf["backgroundcolor"])
   draw = ImageDraw.Draw(image)
 
-  if int(time.strftime('%S')[-1]) == 1:
-
-   wp_file = os.path.split(os.path.abspath(__file__))[0] + '/wp.jpg'
+  wp_file = os.path.split(os.path.abspath(__file__))[0] + '/wp.jpg'
+  if int(time.strftime('%S')[-1]) == 1 and os.path.isfile(wp_file):
    wp = Image.open(wp_file)
-
    factor_w = round(100/wp.width * LCD.width)
    factor_h = round(100/wp.height * LCD.height)
-
    if factor_w <= factor_h:
     new_width = int(wp.width * factor_w / 100)
     new_height = int(wp.height * factor_w / 100)
@@ -101,7 +94,6 @@ def main():
    move_top = int((LCD.height - new_height) / 2)
    try: image.paste(wp,(move_left,move_top))
    except: 1
-
   else:
 
  ##########add lots of compotents to image
@@ -134,32 +126,8 @@ def main():
     draw.text((0,posx), "Time:" + time.strftime('%H:%M:%S', time.localtime()) , fill = cf["fontcolor"])
     posx = posx + 10
 
-   ##########component ip
-   if 'ip' in cf["components"]:
-    draw.text((0,posx), "IP  :" + ip , fill = cf["fontcolor"])
-    posx = posx + 10
-
-   ##########component ping
-   if 'ping' in cf["components"]:
-    try: lastping
-    except: lastping = 0
-    pinglocal = pinginternet = "offline"
-    if len(cf["localpingdestination"]) >= 1: localpingdestination = cf["localpingdestination"]
-    else: localpingdestination = ip[0:ip.rfind('.')] + '.1'
-    if time.time() >= lastping + cf["pingintervall"]: #Ping systems all x seconds
-     if os.system("ping -c 1 -W 1 " + localpingdestination + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
-     else: pinglocalcolor = 'RED'
-     if os.system("ping -c 1 -W 1 " + localpingdestination + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
-     else: pinginternetcolor = 'RED'
-     lastping = int(time.time())
-    draw.rectangle((0, posx + 11) + (int( LCD_1in44.LCD_WIDTH / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
-    draw.text((0,posx), "Ping:     ,", fill = cf["fontcolor"])
-    draw.text((0,posx), "     LOCAL", fill = pinglocalcolor)
-    draw.text((0,posx), "           REMOTE", fill = pinginternetcolor)
-    posx = posx + 13
-
    ##########component ipping
-   if 'ipping' in cf["components"]:
+   if 'ipping' in cf["components"] or 'ip' in cf["components"] or 'ping' in cf["components"]:
     draw.text((0,posx), "IP  :" + ip , fill = cf["fontcolor"])
     try: lastping
     except: lastping = 0
@@ -199,13 +167,13 @@ def main():
     usage = int(float(psutil.cpu_percent()))
     draw.text((0,posx), "CPU :", fill = cf["fontcolor"])
     width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"] ) /100 * usage
-    fontcolor = 'WHITE'
+    fontcolor = cf['fontcolor']
     if usage >= 80: fillcolor = 'RED'
     elif usage >= 60: fillcolor = 'YELLOW'
     else: fillcolor = 'GREEN'
     if fillcolor == 'YELLOW': fontcolor = 'GREY'
     draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
-    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
+    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline=cf['fontcolor'], width=1)
     draw.text((70,posx), str(usage) + "%", fill = fontcolor)
     posx = posx + 10
 
@@ -219,7 +187,7 @@ def main():
     draw.text((0,posx), "RAM :", fill = cf["fontcolor"])
     width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usageratemem
     gpuwidth = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagerategpuram
-    fontcolor = 'WHITE'
+    fontcolor = cf['fontcolor']
     if usageratemem >= 80: fillcolor = 'RED'
     elif usageratemem >= 60: fillcolor = 'YELLOW'
     else: fillcolor = 'GREEN'
@@ -228,14 +196,14 @@ def main():
     draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx) + (LCD_1in44.LCD_WIDTH-1, posx + 3), fill='RED', width=1)
     draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx + 4) + (LCD_1in44.LCD_WIDTH-1, posx + 6), fill='GREEN', width=1)
     draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx + 7) + (LCD_1in44.LCD_WIDTH-1, posx + 10), fill='BLUE', width=1)
-    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
+    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline=cf['fontcolor'], width=1)
     draw.text((40,posx), str(usagemem) + "+" + str(gpuram) + "/" + str(totalmem) + "MB", fill = fontcolor)
     posx = posx + 10
 
    ##########component gpu
    if 'gpu' in cf["components"]:
     gpuram = re.sub('[^0-9]+', '', str(subprocess.check_output('/usr/bin/vcgencmd get_mem gpu|cut -d= -f2', shell=True)))
-    fontcolor = 'WHITE'
+    fontcolor = cf['fontcolor']
     draw.text((0,posx), "GPU: " + str(gpuram) + "MB", fill = fontcolor)
     posx = posx + 10
 
@@ -245,14 +213,14 @@ def main():
     temp = int(format(int(float(tFile.read())/1000),"d"))
     draw.text((0,posx), "Temp:", fill = cf["fontcolor"])
     width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) / (90 - 30) * (temp - 30)
-    fontcolor = 'WHITE'
+    fontcolor = cf['fontcolor']
     if width < 0: width = 0
     if temp >= 70: fillcolor = 'RED'
     elif temp >= 60: fillcolor = 'YELLOW'
     else: fillcolor = 'GREEN'
     if fillcolor == 'YELLOW': fontcolor = 'GREY'
     draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
-    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
+    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline=cf['fontcolor'], width=1)
     draw.text((70,posx), str(temp) + '°C' , fontcolor)
     posx = posx + 10
 
@@ -272,7 +240,7 @@ def main():
     usagesd = round(usagesd / (1024.0 ** 3),1)
     draw.text((0,posx), "SD  :", fill = cf["fontcolor"])
     width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagesdpercent
-    fontcolor = 'WHITE'
+    fontcolor = cf['fontcolor']
     if usagesdpercent >= 90: fillcolor = 'RED'
     elif usagesdpercent >= 70:
      fillcolor = 'YELLOW'
@@ -280,7 +248,7 @@ def main():
     elif usagesdpercent < 50 and totalsd > 4: fillcolor = 'PURPLE'
     else: fillcolor = 'GREEN'
     draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
-    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline='WHITE', width=1)
+    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline=cf['fontcolor'], width=1)
     draw.text((55,posx), str(usagesd) + "/" + str(totalsd) + "GB", fill = fontcolor)
     posx = posx + 10
 
@@ -323,13 +291,19 @@ def main():
   try: lastpicturesave
   except: lastpicturesave = 0
 
-  try:
-   if time.time() >= lastpicturesave + int(cf["picturesaveintervall"]):
+#  print(os.path.isdir(cf["saveimagedestination"]))
+
+  if 'cf["saveimagedestination"]' in locals() and 'cf["picturesaveintervall"]' in locals():
+   if int(cf["picturesaveintervall"]) >= 1:
     saveimagedestination = str(cf["saveimagedestination"]).replace("%HOSTNAME%", str(hostname).lower())
-    image.save(saveimagedestination,optimize=True)
-    lastpicturesave = time.time()
-  except:
-   1+1
+    if (os.path.isdir(os.path.dirname(saveimagedestination))) == True:
+     try:
+      if time.time() >= lastpicturesave + int(cf["picturesaveintervall"]):
+       image.save(saveimagedestination,optimize=True)
+       lastpicturesave = time.time()
+     except:
+      print('picture ' + saveimagedestination + 'could not saved')
+    else: print('folder ' + os.path.isdir(os.path.dirname(saveimagedestination)) + 'not found')
 
 if __name__ == '__main__':
  main()
