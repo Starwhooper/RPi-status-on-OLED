@@ -45,6 +45,7 @@ sudo git clone https://github.com/Starwhooper/RPi-status-on-OLED
 sudo cp /opt/RPi-status-on-OLED/config.json.example /opt/RPi-status-on-OLED/config.json
 sudo nano /opt/RPi-status-on-OLED/config.json
 ```
+Check https://github.com/Starwhooper/RPi-status-on-OLED/wiki/explain-config.json to get more details about the config.json file
 
 ## Start ##
 Its also able to add it in cron via ```crontab -e```, it prevent doublicate starts
