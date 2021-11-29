@@ -25,5 +25,8 @@
 	"rotate": 90,
 	"saveimagedestination": "/mnt/status_%HOSTNAME%.png",
 	"scrollingtextwait": 5,
-	"ttffont": "/opt/RPi-status-on-OLED/font/Courier Prime Bold.ttf"
+	"ttffont": "/opt/RPi-status-on-OLED/font/Courier Prime Bold.ttf",
+    "wallpaper_file": "wp.jpg",
+    "wallpaper_enable": true,
+    "wallpaper_per_minute": 6
 }
