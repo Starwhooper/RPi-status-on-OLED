@@ -93,6 +93,7 @@ if cf["lcddriver"] == 'waveshare144':
 #######################################################
 
  wp_seconds = [99]
+ wp_found = 0
  if "wallpaper_enable" in cf.keys():
   if cf["wallpaper_enable"] == "true":
    if "wallpaper_file" in cf.keys():
@@ -112,6 +113,7 @@ if cf["lcddriver"] == 'waveshare144':
       wp = wp.resize((new_width, new_height))
       move_left = int((LCD.width - new_width) / 2)
       move_top = int((LCD.height - new_height) / 2)
+      wp_found = 1
 
 while True:
 #########prepare blank image
@@ -121,7 +123,7 @@ while True:
 #########show wallpaper instead of regular content
  
  remain = divmod(int(time.strftime('%S')), (60 / cf["wallpaper_per_minute"]))
- if remain[1] == 0:
+ if remain[1] == 0 and wp_found == 1:
   image.paste(wp,(move_left,move_top))
  else:
 
