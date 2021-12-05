@@ -31,6 +31,9 @@ install all needed packages to prepare the software environtent of your Raspberr
 ```bash
 sudo raspi-config
   and enable Interface type SPI
+```
+![Display](https://github.com/Starwhooper/RPi-status-on-OLED/blob/main/examples/enable_spi.gif)
+```bash
 sudo apt-get update && sudo apt-get upgrade && sudo apt-get install python3-pip python3-pil git libatlas-base-dev
 sudo pip3 install RPi.GPIO psutil numpy netifaces
 ```
