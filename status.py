@@ -10,22 +10,12 @@
 
 ##### check if all required packages are aviable
 try:
- from pathlib import Path
+# from pathlib import Path
  from PIL import Image
  from PIL import ImageDraw
- from PIL import ImageFont
- import datetime
- import glob
  import json
- import netifaces
- import numpy
  import os
  import psutil
- import re
- import requests
- import RPi.GPIO as GPIO
- import socket
- import subprocess
  import sys
  import time
 except:
@@ -79,12 +69,12 @@ if cf["lcddriver"] == 'waveshare144':
 #
 #######################################################
 
- try: hostname
- except: hostname = str(socket.gethostname()).upper()
- try: ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
- except: ip = 'noip'
- try: cf["fontcolor"];
- except: cf["fontcolor"] = 'WHITE';
+# try: hostname
+# except: hostname = str(socket.gethostname()).upper()
+# try: ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
+# except: ip = 'noip'
+# try: cf["fontcolor"];
+# except: cf["fontcolor"] = 'WHITE';
 
 #######################################################
 #
@@ -136,205 +126,40 @@ while True:
   except:
    sys.exit('exit: in ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json is no "components" empty, checkout config.json.example')
 
+  sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/component')
+  import rpistathelloworld
+  import rpistathostname
+  import rpistatboard
+  import rpistatcpu
+  import rpistatcurrentdate
+  import rpistatcurrenttime
+  import rpistatipping
+  import rpistatlastimage
+  import rpistatsd
+  import rpistatram
+  import rpistatos
+  import rpistatuptime
+  import rpistattemperatur
+
   for componentname in cf["components"]:
 
-
-
-   ##########component board
-   if componentname == 'board':
-    if 'piboardinformation' not in locals():
-     fobj = open("/sys/firmware/devicetree/base/model")
-     output = ''
-     for line in fobj:
-        output = output + line.rstrip()
-     fobj.close()
-     output = output.replace("Raspberry Pi ", "RPi ")
-     output = output.replace(" Model ", "")
-     output = output.replace("Rev ", "")
-     output = output.replace("  ", " ")
-     output = re.sub('[^a-zA-Z0-9. ]+', '', output)
-     piboardinformation = output
-    draw.text((0,posx), "Main:" + piboardinformation, fill = cf["fontcolor"])
-    posx = posx + 10
-
-   ##########component cpu
-   if componentname == 'cpu':
-    usage = int(float(psutil.cpu_percent()))
-    draw.text((0,posx), "CPU :", fill = cf["fontcolor"])
-    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"] ) /100 * usage
-    fontcolor = cf['fontcolor']
-    if usage >= 80: fillcolor = 'RED'
-    elif usage >= 60: fillcolor = 'YELLOW'
-    else: fillcolor = 'GREEN'
-    if fillcolor == 'YELLOW': fontcolor = 'GREY'
-    draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
-    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline=cf['fontcolor'], width=1)
-    draw.text((70,posx), str(usage) + "%", fill = fontcolor)
-    posx = posx + 10
-
-   ##########component currentdate
-   if componentname == 'currentdate':
-    draw.text((0,posx), "Date:" + datetime.date.today().strftime('%a')[:2] + datetime.date.today().strftime(', %d. %b.\'%y') , fill = cf["fontcolor"])
-    posx = posx + 10
-
-   ##########component currenttime
-   if componentname == 'currenttime':
-    draw.text((0,posx), "Time:" + time.strftime('%H:%M:%S', time.localtime()) , fill = cf["fontcolor"])
-    posx = posx + 10
-
-   ##########component hostname
-   if componentname == 'hostname':
-    if os.path.isfile(cf["ttffont"]):
-     ttffontheader = ImageFont.truetype(cf["ttffont"], 20)
-     width, height = draw.textsize(str(hostname), font=ttffontheader)
-     draw.text( (((LCD_1in44.LCD_WIDTH-width)/2) , 0), str(hostname), font=ttffontheader, fill = 'YELLOW')
-    else:
-     width, height = draw.textsize(str(hostname))
-     imagehostname = Image.new("RGB", (width, height), "BLACK")
-     drawimagehostname = ImageDraw.Draw(imagehostname)
-     drawimagehostname.text((0,0), hostname , fill = 'YELLOW')
-     factor=2
-     imagehostname = imagehostname.resize((int(width*factor), int(height*factor)))
-     image.paste(imagehostname,((int((LCD_1in44.LCD_WIDTH-(width*2))/2)),0))
-    posx = posx + 15
-
-   ##########component ipping
-   if componentname in ('ipping','ip','ping'):
-    draw.text((0,posx), "IP  :" + ip , fill = cf["fontcolor"])
-    try: lastping
-    except: lastping = 0
-    pinglocal = pinginternet = "offline"
-    if len(cf["localpingdestination"]) >= 1: localpingdestination = cf["localpingdestination"]
-    else: localpingdestination = ip[0:ip.rfind('.')] + '.1'
-    if time.time() >= lastping + cf["pingintervall"]: #Ping systems all x seconds
-     if os.system("ping -c 1 -W 1 " + localpingdestination + ">/dev/null") == 0: pinglocalcolor = 'GREEN'
-     else: pinglocalcolor = 'RED'
-     if os.system("ping -c 1 -W 1 " + localpingdestination + ">/dev/null") == 0: pinginternetcolor = 'GREEN'
-     else: pinginternetcolor = 'RED'
-     lastping = int(time.time())
-    draw.rectangle((0, posx + 11) + (int( LCD_1in44.LCD_WIDTH / cf["pingintervall"] * (int(time.time()) - lastping)), posx + 12), fill="GREEN", width=1)
-    draw.text((0,posx), "  L", fill = pinglocalcolor)
-    draw.text((0,posx), "   R", fill = pinginternetcolor)
-    posx = posx + 13
-
-   ##########component lastimage
-   #Shows the latest file from a specified directory. If necessary, this is output as scrolling text.
-   #I use this to see which filenames the latest image of the SD card has.
-   if componentname == 'lastimage':
-    try: marqueepos
-    except: marqueepos = 0
-    try: marqueewait
-    except: marqueewait = 0
-    if 'latest_file' not in locals():
-     checkforlatestfile = str(cf["checkforlatestfile"]).replace("%HOSTNAME%", str(hostname).lower())
-     list_of_files = glob.glob(checkforlatestfile)
-    if len(list_of_files) == 0:
-     draw.text((marqueepos ,posx), 'IMG :', fill = cf["fontcolor"])
-     draw.text((marqueepos ,posx), '     missed', fill = 'RED')
-    else:
-     latest_file = max(list_of_files, key=os.path.getctime)
-     latest_file_name = os.path.basename(latest_file)
-     latest_file_name_text = 'IMG: ' + latest_file_name
-     marqueewidth, marqueewidthheight = draw.textsize(latest_file_name_text)
-     if marqueepos <= LCD_1in44.LCD_WIDTH - marqueewidth:
-      marqueewait = marqueewait + 1
-     else: marqueepos = marqueepos - 2
-     if marqueewait > cf["scrollingtextwait"] / cf["imagerefresh"]:
-      marqueepos = 0
-      marqueewait = 0
-     draw.text((marqueepos ,posx), latest_file_name_text, fill = cf["fontcolor"])
-    posx = posx + 10
-
-   ##########component os
-   if componentname == 'os':
-    debianversionfile = open('/etc/debian_version','r')
-    debianversion = debianversionfile.read()
-
-    draw.text((0,posx), "OS  :" + debianversion, fill = cf["fontcolor"])
-    posx = posx + 10
-
-   ##########component ram
-   if componentname in('ram','gpu'):
-    gpuram = int(re.sub('[^0-9]+', '', str(subprocess.check_output('/usr/bin/vcgencmd get_mem gpu|cut -d= -f2', shell=True))))
-    totalmem = round(psutil.virtual_memory()[0] / 1000 ** 2) + gpuram
-    usagemem = round((psutil.virtual_memory()[0] - psutil.virtual_memory()[1]) / 1000 ** 2)
-    usageratemem = psutil.virtual_memory()[2]
-    usagerategpuram = 100 / (totalmem + gpuram) * gpuram
-    draw.text((0,posx), "RAM :", fill = cf["fontcolor"])
-    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usageratemem
-    gpuwidth = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagerategpuram
-    fontcolor = cf['fontcolor']
-    if usageratemem >= 80: fillcolor = 'RED'
-    elif usageratemem >= 60: fillcolor = 'YELLOW'
-    else: fillcolor = 'GREEN'
-    if fillcolor == 'YELLOW': fontcolor = 'GREY'
-    draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
-    draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx) + (LCD_1in44.LCD_WIDTH-1, posx + 3), fill='RED', width=1)
-    draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx + 4) + (LCD_1in44.LCD_WIDTH-1, posx + 6), fill='GREEN', width=1)
-    draw.rectangle((LCD_1in44.LCD_WIDTH-1-gpuwidth, posx + 7) + (LCD_1in44.LCD_WIDTH-1, posx + 10), fill='BLUE', width=1)
-    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline=cf['fontcolor'], width=1)
-    draw.text((40,posx), str(usagemem) + "+" + str(gpuram) + "/" + str(totalmem) + "MB", fill = fontcolor)
-    posx = posx + 10
-
-   ##########component sd
-   if componentname == 'sd':
-    totalsd = psutil.disk_usage('/').total
-    freesd = psutil.disk_usage('/').free
-    usagesd = totalsd - freesd
-    usagesdpercent = 100 / totalsd * usagesd
-
-    if totalsd >= 17000000000: totalsd = 32
-    elif totalsd >= 9000000000: totalsd = 16
-    elif totalsd >= 5000000000: totalsd = 8
-    elif totalsd >= 3000000000: totalsd = 4
-    else: totalsd = 2
-
-    usagesd = round(usagesd / (1024.0 ** 3),1)
-    draw.text((0,posx), "SD  :", fill = cf["fontcolor"])
-    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) /100 * usagesdpercent
-    fontcolor = cf['fontcolor']
-    if usagesdpercent >= 90: fillcolor = 'RED'
-    elif usagesdpercent >= 70:
-     fillcolor = 'YELLOW'
-     fontcolor = 'GRAY'
-    elif usagesdpercent < 50 and totalsd > 4: fillcolor = 'PURPLE'
-    else: fillcolor = 'GREEN'
-    draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
-    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline=cf['fontcolor'], width=1)
-    draw.text((55,posx), str(usagesd) + "/" + str(totalsd) + "GB", fill = fontcolor)
-    posx = posx + 10
-
-   ##########component temperatur
-   if componentname == 'temperatur':
-    tFile = open('/sys/class/thermal/thermal_zone0/temp')
-    temp = int(format(int(float(tFile.read())/1000),"d"))
-    draw.text((0,posx), "Temp:", fill = cf["fontcolor"])
-    width = (LCD_1in44.LCD_WIDTH - 1 - cf["boxmarginleft"]) / (90 - 30) * (temp - 30)
-    fontcolor = cf['fontcolor']
-    if width < 0: width = 0
-    if temp >= 70: fillcolor = 'RED'
-    elif temp >= 60: fillcolor = 'YELLOW'
-    else: fillcolor = 'GREEN'
-    if fillcolor == 'YELLOW': fontcolor = 'GREY'
-    draw.rectangle((cf["boxmarginleft"], posx) + (cf["boxmarginleft"] + width, posx + 10), fill=fillcolor, width=0)
-    draw.rectangle((cf["boxmarginleft"], posx) + (LCD_1in44.LCD_WIDTH-1, posx + 10), outline=cf['fontcolor'], width=1)
-    draw.text((70,posx), str(temp) + '°C' , fontcolor)
-    posx = posx + 10
-
-
-   ##########uptime
-   if componentname == 'uptime':
-
-    def formatTimeAgo(seconds):
-     if seconds < 60: return "%i seconds" % seconds
-     elif seconds < 3600: return "%i minutes" % (seconds/float(60))
-     elif seconds < (3600*24): return "%.1f hours" % (seconds/float(3600))
-     elif seconds < (3600*24*7): return "%.1f days" % (seconds/float(3600*24))
-     else: return "%.1f Weeks" % (seconds/float(3600*24*7))
-
-    draw.text((0,posx), "uptm:" + formatTimeAgo(time.time() - psutil.boot_time()) , fill = cf["fontcolor"])
-    posx = posx + 10
-
+   if componentname == 'helloworld': banner, bannerhight = rpistathelloworld.output(cf,LCD.width)
+   if componentname == 'board': banner, bannerhight = rpistatboard.output(cf,LCD.width)
+   if componentname == 'hostname': banner, bannerhight = rpistathostname.output(cf,LCD.width)
+   if componentname == 'cpu': banner, bannerhight = rpistatcpu.output(cf,LCD.width)
+   if componentname == 'currentdate': banner, bannerhight = rpistatcurrentdate.output(cf,LCD.width)
+   if componentname == 'currenttime': banner, bannerhight = rpistatcurrenttime.output(cf,LCD.width)
+   if componentname == 'ipping': banner, bannerhight = rpistatipping.output(cf,LCD.width)
+   if componentname == 'lastimage': banner, bannerhight = rpistatlastimage.output(cf,LCD.width)
+   if componentname == 'ram': banner, bannerhight = rpistatram.output(cf,LCD.width)
+   if componentname == 'sd': banner, bannerhight = rpistatsd.output(cf,LCD.width)
+   if componentname == 'os': banner, bannerhight = rpistatos.output(cf,LCD.width)
+   if componentname == 'temperatur': banner, bannerhight = rpistattemperatur.output(cf,LCD.width)
+   if componentname == 'uptime': banner, bannerhight = rpistatuptime.output(cf,LCD.width)
+   image.paste(banner,(0,posx))
+   banner=Image.new("RGB", (1, 1), cf["backgroundcolor"])
+   posx = posx + bannerhight
+   bannerhight=0
 
 ####################################################promt picture to display
  if cf['rotate'] == 90: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
