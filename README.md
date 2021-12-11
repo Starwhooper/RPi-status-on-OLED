@@ -43,6 +43,11 @@ cd /opt
 sudo git clone https://github.com/Starwhooper/RPi-status-on-OLED
 ```
 
+OPTIONAL: if you with to get some beauty fonts, to use them to show a prettier hostname, do this:
+```bash
+sudo apt-get install ttf-mscorefonts-installer
+```
+
 ## First configurtion ##
 ```bash
 sudo cp /opt/RPi-status-on-OLED/config.json.example /opt/RPi-status-on-OLED/config.json
