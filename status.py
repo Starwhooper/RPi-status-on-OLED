@@ -54,7 +54,7 @@ if cf["lcddriver"] == 'waveshare144':
   import LCD_1in44
   import LCD_Config
  except:
-  sys.exit('exit: modules from waveshare not found in ' + os.path.split(os.path.abspath(__file__))[0] + '/' + cf["lcddriver"] + ', or was found but could not load')
+  sys.exit('exit: modules from waveshare not found in ' + os.path.split(os.path.abspath(__file__))[0] + '/lcddriver/' + cf["lcddriver"] + ', or was found but could not load')
  try:
   LCD = LCD_1in44.LCD()
   Lcd_ScanDir = LCD_1in44.SCAN_DIR_DFT
