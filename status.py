@@ -140,6 +140,7 @@ while True:
   import rpistatos
   import rpistatuptime
   import rpistattemperatur
+  import rpistatborder
 
   for componentname in cf["components"]:
 
@@ -156,6 +157,7 @@ while True:
    if componentname == 'os': banner, bannerhight = rpistatos.output(cf,LCD.width)
    if componentname == 'temperatur': banner, bannerhight = rpistattemperatur.output(cf,LCD.width)
    if componentname == 'uptime': banner, bannerhight = rpistatuptime.output(cf,LCD.width)
+   if componentname == 'border': banner, bannerhight = rpistatborder.output(cf,LCD.width)
    image.paste(banner,(0,posx))
    banner=Image.new("RGB", (1, 1), cf["backgroundcolor"])
    posx = posx + bannerhight
