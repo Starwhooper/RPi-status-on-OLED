@@ -18,6 +18,7 @@ try:
  import psutil
  import sys
  import time
+ import glob
 except:
  sys.exit('any needed package is not aviable. Please check README.md to check which components shopuld be installed via pip3".')
 
@@ -89,7 +90,6 @@ if cf["lcddriver"] == 'waveshare144':
    if "wallpaper_file" in cf.keys():
     if "wallpaper_per_minute" in cf.keys():
      wp_file = os.path.split(os.path.abspath(__file__))[0] + '/' + cf["wallpaper_file"]
-     print(os.path.split(os.path.abspath(__file__))[0] + '/' + cf["wallpaper_file"])
      if os.path.isfile(wp_file):
       wp = Image.open(wp_file)
       factor_w = round(100/wp.width * LCD.width)
@@ -127,6 +127,7 @@ while True:
    sys.exit('exit: in ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json is no "components" empty, checkout config.json.example')
 
   sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/component')
+
   import rpistathelloworld
   import rpistathostname
   import rpistatboard
@@ -136,6 +137,7 @@ while True:
   import rpistatipping
   import rpistatlastimage
   import rpistatsd
+  import rpistatdrive
   import rpistatram
   import rpistatos
   import rpistatuptime
@@ -143,7 +145,6 @@ while True:
   import rpistatborder
 
   for componentname in cf["components"]:
-
    if componentname == 'helloworld': banner, bannerhight = rpistathelloworld.output(cf,LCD.width)
    if componentname == 'board': banner, bannerhight = rpistatboard.output(cf,LCD.width)
    if componentname == 'hostname': banner, bannerhight = rpistathostname.output(cf,LCD.width)
@@ -154,6 +155,7 @@ while True:
    if componentname == 'lastimage': banner, bannerhight = rpistatlastimage.output(cf,LCD.width)
    if componentname == 'ram': banner, bannerhight = rpistatram.output(cf,LCD.width)
    if componentname == 'sd': banner, bannerhight = rpistatsd.output(cf,LCD.width)
+   if componentname == 'drive': banner, bannerhight = rpistatdrive.output(cf,LCD.width)
    if componentname == 'os': banner, bannerhight = rpistatos.output(cf,LCD.width)
    if componentname == 'temperatur': banner, bannerhight = rpistattemperatur.output(cf,LCD.width)
    if componentname == 'uptime': banner, bannerhight = rpistatuptime.output(cf,LCD.width)
