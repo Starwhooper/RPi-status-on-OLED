@@ -83,27 +83,56 @@ if cf["lcddriver"] == 'waveshare144':
 #
 #######################################################
 
- wp_seconds = [99]
- wp_found = 0
- if "wallpaper_enable" in cf.keys():
-  if cf["wallpaper_enable"] == "true":
-   if "wallpaper_file" in cf.keys():
-    if "wallpaper_per_minute" in cf.keys():
-     wp_file = os.path.split(os.path.abspath(__file__))[0] + '/' + cf["wallpaper_file"]
-     if os.path.isfile(wp_file):
-      wp = Image.open(wp_file)
-      factor_w = round(100/wp.width * LCD.width)
-      factor_h = round(100/wp.height * LCD.height)
-      if factor_w <= factor_h:
-       new_width = int(wp.width * factor_w / 100)
-       new_height = int(wp.height * factor_w / 100)
-      else:
-       new_width = int(wp.width * factor_h / 100)
-       new_height = int(wp.height * factor_h / 100)
-      wp = wp.resize((new_width, new_height))
-      move_left = int((LCD.width - new_width) / 2)
-      move_top = int((LCD.height - new_height) / 2)
-      wp_found = 1
+wp_seconds = [99]
+wp_found = 0
+if "wallpaper_enable" in cf.keys():
+ if cf["wallpaper_enable"] == "true":
+  if "wallpaper_file" in cf.keys():
+   if "wallpaper_per_minute" in cf.keys():
+    wp_file = os.path.split(os.path.abspath(__file__))[0] + '/' + cf["wallpaper_file"]
+    if os.path.isfile(wp_file):
+     wp = Image.open(wp_file)
+     factor_w = round(100/wp.width * LCD.width)
+     factor_h = round(100/wp.height * LCD.height)
+     if factor_w <= factor_h:
+      new_width = int(wp.width * factor_w / 100)
+      new_height = int(wp.height * factor_w / 100)
+     else:
+      new_width = int(wp.width * factor_h / 100)
+      new_height = int(wp.height * factor_h / 100)
+     wp = wp.resize((new_width, new_height))
+     move_left = int((LCD.width - new_width) / 2)
+     move_top = int((LCD.height - new_height) / 2)
+     wp_found = 1
+
+#######################################################
+#
+# import own functions
+#
+#######################################################
+
+try:
+ cf["components"][0]
+except:
+ sys.exit('exit: in ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json is no "components" empty, checkout config.json.example')
+
+sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/component')
+import rpistathelloworld
+import rpistathostname
+import rpistatboard
+import rpistatcpu
+import rpistatcurrentdate
+import rpistatcurrenttime
+import rpistatipping
+import rpistatlastimage
+import rpistatsd
+import rpistatdrive
+import rpistatram
+import rpistatos
+import rpistatuptime
+import rpistattemperatur
+import rpistatborder
+
 
 while True:
 #########prepare blank image
@@ -111,38 +140,12 @@ while True:
  draw = ImageDraw.Draw(image)
 
 #########show wallpaper instead of regular content
- 
  remain = divmod(int(time.strftime('%S')), (60 / cf["wallpaper_per_minute"]))
  if remain[1] == 0 and wp_found == 1:
   image.paste(wp,(move_left,move_top))
  else:
 
-##########add lots of compotents to image
   posx = 0
-
-  ##### check components
-  try:
-   cf["components"][0]
-  except:
-   sys.exit('exit: in ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json is no "components" empty, checkout config.json.example')
-
-  sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/component')
-
-  import rpistathelloworld
-  import rpistathostname
-  import rpistatboard
-  import rpistatcpu
-  import rpistatcurrentdate
-  import rpistatcurrenttime
-  import rpistatipping
-  import rpistatlastimage
-  import rpistatsd
-  import rpistatdrive
-  import rpistatram
-  import rpistatos
-  import rpistatuptime
-  import rpistattemperatur
-  import rpistatborder
 
   for componentname in cf["components"]:
    if componentname == 'helloworld': banner, bannerhight = rpistathelloworld.output(cf,LCD.width)
@@ -171,12 +174,10 @@ while True:
  elif cf['rotate'] == 270: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_270),0,0)
  else: LCD.LCD_ShowImage(image,0,0)
 
- time.sleep(int(cf["imagerefresh"]))
+ time.sleep(float(cf["imagerefresh"]))
 
  try: lastpicturesave
  except: lastpicturesave = 0
-
-#  print(os.path.isdir(cf["saveimagedestination"]))
 
  if 'cf["saveimagedestination"]' in locals() and 'cf["picturesaveintervall"]' in locals():
   if int(cf["picturesaveintervall"]) >= 1:
@@ -189,4 +190,3 @@ while True:
     except:
      print('picture ' + saveimagedestination + 'could not saved')
    else: print('folder ' + os.path.isdir(os.path.dirname(saveimagedestination)) + 'not found')
-
