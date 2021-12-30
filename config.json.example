@@ -18,7 +18,7 @@
 		"lastimage"
 	],
 	"checkforlatestfile": "/mnt/%HOSTNAME%/_image/*.zip",
-	"imagerefresh": 0.8,
+	"imagerefresh": 0.2,
 	"localpingdestination": "",
 	"picturesaveintervall": 3600,
 	"pingintervall": 300,
