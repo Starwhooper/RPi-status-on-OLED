@@ -25,7 +25,7 @@ def output(cf,lcd_width):
  elif usagesdpercent >= 70:
   fillcolor = 'YELLOW'
   fontcolor = 'GRAY'
- elif usagesdpercent < 50 and totalsd > 4: fillcolor = 'PURPLE'
+ elif usagesdpercent < 44 and totalsd > 4: fillcolor = 'PURPLE'
  else: fillcolor = 'GREEN'
  draw.rectangle((cf["boxmarginleft"], 0) + (cf["boxmarginleft"] + width, 0 + 10), fill=fillcolor, width=0)
  draw.rectangle((cf["boxmarginleft"], 0) + (lcd_width-1, 0 + 10), outline=cf['fontcolor'], width=1)
