@@ -16,6 +16,7 @@ try:
  import json
  import os
  import psutil
+ import socket
  import sys
  import time
  import glob
@@ -85,11 +86,11 @@ if cf["lcddriver"] == 'waveshare144':
 
 wp_seconds = [99]
 wp_found = 0
-if "wallpaper_enable" in cf.keys():
- if cf["wallpaper_enable"] == "true":
-  if "wallpaper_file" in cf.keys():
-   if "wallpaper_per_minute" in cf.keys():
-    wp_file = os.path.split(os.path.abspath(__file__))[0] + '/' + cf["wallpaper_file"]
+if "wallpaper" in cf.keys():
+ if cf["wallpaper"]["enable"] == "true":
+  if "file" in cf["wallpaper"].keys():
+   if "per_minute" in cf["wallpaper"].keys():
+    wp_file = os.path.split(os.path.abspath(__file__))[0] + '/' + cf["wallpaper"]["file"]
     if os.path.isfile(wp_file):
      wp = Image.open(wp_file)
      factor_w = round(100/wp.width * LCD.width)
@@ -134,19 +135,27 @@ import rpistattemperatur
 import rpistatborder
 
 
+
+alert = ''
+lastmessage = 0
+
+
+
+
+
 while True:
 #########prepare blank image
  image = Image.new("RGB", (LCD.width, LCD.height), cf["backgroundcolor"])
  draw = ImageDraw.Draw(image)
 
 #########show wallpaper instead of regular content
- remain = divmod(int(time.strftime('%S')), (60 / cf["wallpaper_per_minute"]))
+ remain = divmod(int(time.strftime('%S')), (60 / cf["wallpaper"]["per_minute"]))
  if remain[1] == 0 and wp_found == 1:
   image.paste(wp,(move_left,move_top))
  else:
 
   posx = 0
-
+  
   for componentname in cf["components"]:
    if componentname == 'helloworld': banner, bannerhight = rpistathelloworld.output(cf,LCD.width)
    if componentname == 'board': banner, bannerhight = rpistatboard.output(cf,LCD.width)
@@ -158,7 +167,7 @@ while True:
    if componentname == 'lastimage': banner, bannerhight = rpistatlastimage.output(cf,LCD.width)
    if componentname == 'ram': banner, bannerhight = rpistatram.output(cf,LCD.width)
    if componentname == 'sd': banner, bannerhight = rpistatsd.output(cf,LCD.width)
-   if componentname == 'drive': banner, bannerhight = rpistatdrive.output(cf,LCD.width)
+   if componentname == 'drive': banner, bannerhight, alert = rpistatdrive.output(cf,LCD.width)
    if componentname == 'os': banner, bannerhight = rpistatos.output(cf,LCD.width)
    if componentname == 'temperatur': banner, bannerhight = rpistattemperatur.output(cf,LCD.width)
    if componentname == 'uptime': banner, bannerhight = rpistatuptime.output(cf,LCD.width)
@@ -167,6 +176,24 @@ while True:
    banner=Image.new("RGB", (1, 1), cf["backgroundcolor"])
    posx = posx + bannerhight
    bannerhight=0
+   
+   if len(alert) >= 1:
+    if cf["pushover"]["messages"] == 1 and time.time() >= lastmessage + 60 * 60 * 24:
+     import requests
+     r = requests.post("https://api.pushover.net/1/messages.json", data = {
+         "token": cf["pushover"]["apikey"],
+         "user": cf["pushover"]["userkey"],
+         "html": 1,
+         "priority": 1,
+         "message": alert,
+         }
+     ,
+     files = {
+      "attachment": ("image.png", open(str(cf["savescreen"]["destination"]).replace("%HOSTNAME%", str(socket.gethostname()).lower()), "rb"), "image/png")
+     }
+     )
+     lastmessage = time.time()
+     alert=''
 
 ####################################################promt picture to display
  if cf['rotate'] == 90: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
@@ -179,12 +206,12 @@ while True:
  try: lastpicturesave
  except: lastpicturesave = 0
 
- if 'cf["saveimagedestination"]' in locals() and 'cf["picturesaveintervall"]' in locals():
-  if int(cf["picturesaveintervall"]) >= 1:
-   saveimagedestination = str(cf["saveimagedestination"]).replace("%HOSTNAME%", str(hostname).lower())
+ if 'cf["savescreen"]' in locals() and 'cf["savescreen"]["intervall"]' in locals():
+  if int(cf["savescreen"]["intervall"]) >= 1:
+   saveimagedestination = str(cf["savescreen"]["destination"]).replace("%HOSTNAME%", str(hostname).lower())
    if (os.path.isdir(os.path.dirname(saveimagedestination))) == True:
     try:
-     if time.time() >= lastpicturesave + int(cf["picturesaveintervall"]):
+     if time.time() >= lastpicturesave + int(cf["savescreen"]["intervall"]):
       image.save(saveimagedestination,optimize=True)
       lastpicturesave = time.time()
     except:

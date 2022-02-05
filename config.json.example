@@ -1,8 +1,9 @@
 {
-  "lcddriver":"waveshare144",
   "backgroundcolor":"BLACK",
-  "fontcolor":"WHITE",
   "boxmarginleft":27,
+  "fontcolor":"WHITE",
+  "imagerefresh":0.2,
+  "lcddriver":"waveshare144",
   "components":[
     "hostname",
     "currentdate",
@@ -14,24 +15,41 @@
     "ram",
     "temperatur",
     "sd",
+    "drive",
     "border",
     "lastimage"
   ],
-  "checkforlatestfile":"/mnt/%HOSTNAME%/_image/*.zip",
-  "imagerefresh":0.2,
-  "localpingdestination":"",
-  "picturesaveintervall":3600,
-  "pingintervall":300,
-  "remotepingdestination":"8.8.8.8",
-  "rotate":90,
-  "saveimagedestination":"/mnt/status_%HOSTNAME%.png",
+  "component_drive":{
+    "drive":[
+      "/mnt/share1",
+	  "/mnt/share2"
+    ]
+  },
+  "component_hostname":{
+    "ttffont":"/opt/RPi-status-on-OLED/font/Courier Prime Bold.ttf"
+  },
+  "component_ipping":{
+    "localpingdestination":"",
+    "pingintervall":300,
+    "remotepingdestination":"8.8.8.8"
+  },
+  "component_lastimage":{
+    "checkforlatestfile":"/mnt/share/%HOSTNAME%/_image/*.img"
+  },
+  "pushover":{
+	  "messages": 1,
+	  "apikey":"awrnqtbhphrtnt3zo6u48b1u49dapp",
+      "userkey":"u2ucjms27nh2xvx1m8hw8jrhc3tr5y"
+  },
+  "rotate":180,
+  "savescreen":{
+    "destination":"/mnt/share/status_%HOSTNAME%.png",
+    "intervall":3600
+  },
   "scrollingtextwait":5,
-  "ttffont":"/opt/RPi-status-on-OLED/font/Courier Prime Bold.ttf",
-  "wallpaper_file":"wp.jpg",
-  "wallpaper_enable":"true",
-  "wallpaper_per_minute":6,
-  "drive":[
-    "/",
-    "/mnt/server/share"
-  ]
+  "wallpaper":{
+    "file":"wp.jpg",
+    "enable":"true",
+    "per_minute":6
+  }
 }
