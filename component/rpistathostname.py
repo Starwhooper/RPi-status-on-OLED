@@ -12,8 +12,8 @@ def output(cf,width):
  image = Image.new("RGB", (width, 15), cf["backgroundcolor"])
  draw = ImageDraw.Draw(image)
  
- if os.path.isfile(cf["ttffont"]):
-  ttffontheader = ImageFont.truetype(cf["ttffont"], 20)
+ if os.path.isfile(cf["component_hostname"]["ttffont"]):
+  ttffontheader = ImageFont.truetype(cf["component_hostname"]["ttffont"], 20)
   textwidth, textheight = draw.textsize(str(hostname), font=ttffontheader)
   draw.text( (((width-textwidth)/2) , 0), str(hostname), font=ttffontheader, fill = 'YELLOW')
  else:
