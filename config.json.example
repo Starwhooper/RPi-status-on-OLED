@@ -38,8 +38,8 @@
   },
   "pushover":{
 	  "messages": 1,
-	  "apikey":"awrnqtbhphrtnt3zo6u48b1u49dapp",
-      "userkey":"u2ucjms27nh2xvx1m8hw8jrhc3tr5y"
+	  "apikey":"",
+      "userkey":""
   },
   "rotate":180,
   "savescreen":{
