@@ -185,7 +185,7 @@ while True:
          "user": cf["pushover"]["userkey"],
          "html": 1,
          "priority": 1,
-         "message": alert,
+         "message": hostname + " " + alert,
          }
      ,
      files = {
