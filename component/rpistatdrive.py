@@ -9,14 +9,15 @@ def output(cf,lcd_width):
 
  image = Image.new("RGB", (lcd_width, len(cf["component_drive"]['drive'])*10), cf["backgroundcolor"])
  draw = ImageDraw.Draw(image)
- 
+
  drivenumber = 0
- 
+
  try: lastmessage
  except: lastmessage = 0
- 
+
  for drive in cf["component_drive"]['drive']:
   if os.path.isdir(drive):
+   alert = ''
    totalsd = psutil.disk_usage(drive).total
    freesd = psutil.disk_usage(drive).free
    usagesd = totalsd - freesd
@@ -24,7 +25,7 @@ def output(cf,lcd_width):
  
    usagesd = round(usagesd / (1024.0 ** 3),1)
    draw.text((0,drivenumber*10), "Drv" + str(drivenumber) + ':', fill = cf["fontcolor"])
-   
+
    width = (lcd_width - 1 - cf["boxmarginleft"]) /100 * usagesdpercent
    fontcolor = cf['fontcolor']
    if usagesdpercent >= 90: fillcolor = 'RED'
@@ -40,8 +41,7 @@ def output(cf,lcd_width):
     alert = '<b>' + drive + '</b>: <font color="' + fillcolor + '">' + str(round(usagesdpercent)) + '%</font> ' + str(usagesd) + ' GB used'
   else:
    print('folder ' + drive + ' not found')
-  
+
  bannerwidth, bannerheight = image.size
- 
+
  return (image,bannerheight, alert)
- 
