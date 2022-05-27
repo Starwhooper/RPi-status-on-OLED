@@ -118,22 +118,23 @@ except:
  sys.exit('exit: in ' + os.path.split(os.path.abspath(__file__))[0] + '/config.json is no "components" empty, checkout config.json.example')
 
 sys.path.append(os.path.split(os.path.abspath(__file__))[0] + '/component')
-import rpistathelloworld
-import rpistathostname
 import rpistatboard
+import rpistatborder
 import rpistatcpu
 import rpistatcurrentdate
 import rpistatcurrentdatetime
 import rpistatcurrenttime
+import rpistatdrive
+import rpistathelloworld
+import rpistathostname
 import rpistatipping
 import rpistatlastimage
-import rpistatsd
-import rpistatdrive
-import rpistatram
 import rpistatos
-import rpistatuptime
+import rpistatram
+import rpistatsd
 import rpistattemperatur
-import rpistatborder
+import rpistatuptime
+import rpistatversion
 
 alert = ''
 lastmessage = 0
@@ -159,22 +160,23 @@ while True:
   overallhight = 0
   
   for componentname in cf["components"]:
-   if componentname == 'helloworld': banner, bannerhight = rpistathelloworld.output(cf,LCD.width)
    if componentname == 'board': banner, bannerhight = rpistatboard.output(cf,LCD.width)
-   if componentname == 'hostname': banner, bannerhight = rpistathostname.output(cf,LCD.width)
+   if componentname == 'border': banner, bannerhight = rpistatborder.output(cf,LCD.width)
    if componentname == 'cpu': banner, bannerhight = rpistatcpu.output(cf,LCD.width)
    if componentname == 'currentdate': banner, bannerhight = rpistatcurrentdate.output(cf,LCD.width)
    if componentname == 'currentdatetime': banner, bannerhight = rpistatcurrentdatetime.output(cf,LCD.width)
    if componentname == 'currenttime': banner, bannerhight = rpistatcurrenttime.output(cf,LCD.width)
+   if componentname == 'drive': banner, bannerhight, alert = rpistatdrive.output(cf,LCD.width)
+   if componentname == 'helloworld': banner, bannerhight = rpistathelloworld.output(cf,LCD.width)
+   if componentname == 'hostname': banner, bannerhight = rpistathostname.output(cf,LCD.width)
    if componentname == 'ipping': banner, bannerhight = rpistatipping.output(cf,LCD.width)
    if componentname == 'lastimage': banner, bannerhight = rpistatlastimage.output(cf,LCD.width)
+   if componentname == 'os': banner, bannerhight = rpistatos.output(cf,LCD.width)
    if componentname == 'ram': banner, bannerhight = rpistatram.output(cf,LCD.width)
    if componentname == 'sd': banner, bannerhight = rpistatsd.output(cf,LCD.width)
-   if componentname == 'drive': banner, bannerhight, alert = rpistatdrive.output(cf,LCD.width)
-   if componentname == 'os': banner, bannerhight = rpistatos.output(cf,LCD.width)
    if componentname == 'temperatur': banner, bannerhight = rpistattemperatur.output(cf,LCD.width)
    if componentname == 'uptime': banner, bannerhight = rpistatuptime.output(cf,LCD.width)
-   if componentname == 'border': banner, bannerhight = rpistatborder.output(cf,LCD.width)
+   if componentname == 'version': banner, bannerhight = rpistatversion.output(cf,LCD.width)
    image.paste(banner,(0,posx))
    banner=Image.new("RGB", (1, 1), cf["backgroundcolor"])
    posx = posx + bannerhight
