@@ -123,6 +123,7 @@ import rpistathostname
 import rpistatboard
 import rpistatcpu
 import rpistatcurrentdate
+import rpistatcurrentdatetime
 import rpistatcurrenttime
 import rpistatipping
 import rpistatlastimage
@@ -163,6 +164,7 @@ while True:
    if componentname == 'hostname': banner, bannerhight = rpistathostname.output(cf,LCD.width)
    if componentname == 'cpu': banner, bannerhight = rpistatcpu.output(cf,LCD.width)
    if componentname == 'currentdate': banner, bannerhight = rpistatcurrentdate.output(cf,LCD.width)
+   if componentname == 'currentdatetime': banner, bannerhight = rpistatcurrentdatetime.output(cf,LCD.width)
    if componentname == 'currenttime': banner, bannerhight = rpistatcurrenttime.output(cf,LCD.width)
    if componentname == 'ipping': banner, bannerhight = rpistatipping.output(cf,LCD.width)
    if componentname == 'lastimage': banner, bannerhight = rpistatlastimage.output(cf,LCD.width)
