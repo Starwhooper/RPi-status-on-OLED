@@ -200,7 +200,10 @@ while True:
 ####################################################promt picture to display
  if scroll_y == 0: 
   scroll_y = overallhight
-  if scroll_y > LCD.height + cf['no_y_scroll_offset'] : gab_y = scroll_y - LCD.height
+  try: 
+   if scroll_y > LCD.height + cf['no_y_scroll_offset']: gab_y = scroll_y - LCD.height
+  except:
+   if scroll_y > LCD.height: gab_y = scroll_y - LCD.height
 
  if cf['rotate'] == 90: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
  elif cf['rotate'] == 180: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_180),0,0)
