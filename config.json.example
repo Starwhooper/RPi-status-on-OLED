@@ -4,6 +4,7 @@
   "fontcolor":"WHITE",
   "imagerefresh":0.2,
   "lcddriver":"waveshare144",
+  "no_y_scroll_offset": 2,
   "components":[
     "hostname",
     "currentdate",
