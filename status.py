@@ -134,14 +134,11 @@ import rpistatuptime
 import rpistattemperatur
 import rpistatborder
 
-
-
 alert = ''
 lastmessage = 0
-
-
-
-
+scroll_y = 0
+gab_y = 0
+current_gab_y = 0
 
 while True:
 #########prepare blank image
@@ -153,8 +150,12 @@ while True:
  if remain[1] == 0 and wp_found == 1:
   image.paste(wp,(move_left,move_top))
  else:
+  if current_gab_y < gab_y:
+   current_gab_y = current_gab_y + 1
+  else: current_gab_y = 0
+  posx = 0 - current_gab_y
 
-  posx = 0
+  overallhight = 0
   
   for componentname in cf["components"]:
    if componentname == 'helloworld': banner, bannerhight = rpistathelloworld.output(cf,LCD.width)
@@ -175,6 +176,7 @@ while True:
    image.paste(banner,(0,posx))
    banner=Image.new("RGB", (1, 1), cf["backgroundcolor"])
    posx = posx + bannerhight
+   overallhight = overallhight + bannerhight
    bannerhight=0
    
    if len(alert) >= 1:
@@ -196,6 +198,10 @@ while True:
      alert=''
 
 ####################################################promt picture to display
+ if scroll_y == 0: 
+  scroll_y = overallhight
+  if scroll_y > LCD.height + cf['no_y_scroll_offset'] : gab_y = scroll_y - LCD.height
+
  if cf['rotate'] == 90: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_90),0,0)
  elif cf['rotate'] == 180: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_180),0,0)
  elif cf['rotate'] == 270: LCD.LCD_ShowImage(image.transpose(Image.ROTATE_270),0,0)
