@@ -17,7 +17,9 @@
     "sd",
     "drive",
     "border",
-    "lastimage"
+    "lastimage",
+    "os",
+    "version"
   ],
   "component_drive":{
     "drive":[
