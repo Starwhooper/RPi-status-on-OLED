@@ -34,7 +34,7 @@ sudo raspi-config
 ```
 ![Display](https://github.com/Starwhooper/RPi-status-on-OLED/blob/main/examples/enable_spi.gif)
 ```bash
-sudo apt-get install python3-pip python3-pil git libatlas-base-dev
+sudo apt install python3-pip python3-pil git libatlas-base-dev
 sudo pip3 install RPi.GPIO psutil numpy netifaces spidev
 ```
 and this tool itself:
@@ -45,7 +45,7 @@ sudo git clone https://github.com/Starwhooper/RPi-status-on-OLED
 
 OPTIONAL: if you with to get some beauty fonts, to use them to show a prettier hostname, do this:
 ```bash
-sudo apt-get install ttf-mscorefonts-installer
+sudo apt install ttf-mscorefonts-installer
 ```
 
 ## First configurtion ##
