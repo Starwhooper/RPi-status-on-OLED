@@ -1,3 +1,5 @@
+i recommend to use https://github.com/Starwhooper/RPi-status-via-luma as my newer solution.
+
 # RPi-status-on-OLED #
 
 To provide the Status of your Raspberry (tested on Zero, 2, 3 and 4) to an ST7735S OLED Display.
