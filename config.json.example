@@ -28,7 +28,7 @@
     ]
   },
   "component_hostname":{
-    "ttffont":"/opt/RPi-status-on-OLED/font/Courier Prime Bold.ttf"
+    "ttffont":"/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
   },
   "component_ipping":{
     "localpingdestination":"",
